@@ -1,0 +1,22 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\healthchecker\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\healthchecker\\module.healthchecker.cpp",
+        "ProvidedModule": "",
+        "PCH": "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\intermediate\\build\\win64\\x64\\custonpluginseditor\\development\\unrealed\\sharedpch.unrealed.project.valapi.valexpapi.cpp20.h.pch",
+        "Includes": [
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\healthchecker\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\healthchecker\\definitions.healthchecker.h",
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\healthchecker\\intermediate\\build\\win64\\unrealeditor\\inc\\healthchecker\\uht\\healthchecker.init.gen.cpp",
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\healthchecker\\intermediate\\build\\win64\\unrealeditor\\inc\\healthchecker\\uht\\healthcheckereditorsubsystem.gen.cpp",
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\healthchecker\\source\\healthchecker\\public\\healthcheckereditorsubsystem.h",
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\healthchecker\\intermediate\\build\\win64\\unrealeditor\\inc\\healthchecker\\uht\\healthcheckereditorsubsystem.generated.h",
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\healthchecker\\intermediate\\build\\win64\\unrealeditor\\inc\\healthchecker\\uht\\healthcheckertypes.gen.cpp",
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\healthchecker\\source\\healthchecker\\public\\healthcheckertypes.h",
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\healthchecker\\intermediate\\build\\win64\\unrealeditor\\inc\\healthchecker\\uht\\healthcheckertypes.generated.h",
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\healthchecker\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\healthchecker\\permoduleinline.gen.cpp",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\core\\public\\hal\\permoduleinline.inl"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

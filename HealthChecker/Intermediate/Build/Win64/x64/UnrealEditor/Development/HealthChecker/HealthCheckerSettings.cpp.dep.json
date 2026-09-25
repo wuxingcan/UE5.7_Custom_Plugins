@@ -1,0 +1,18 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\healthchecker\\source\\healthchecker\\private\\healthcheckersettings.cpp",
+        "ProvidedModule": "",
+        "PCH": "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\intermediate\\build\\win64\\x64\\custonpluginseditor\\development\\unrealed\\sharedpch.unrealed.project.valapi.valexpapi.cpp20.h.pch",
+        "Includes": [
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\healthchecker\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\healthchecker\\definitions.healthchecker.h",
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\healthchecker\\source\\healthchecker\\public\\healthcheckersettings.h",
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\healthchecker\\source\\healthchecker\\public\\healthcheckertypes.h",
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\healthchecker\\intermediate\\build\\win64\\unrealeditor\\inc\\healthchecker\\uht\\healthcheckertypes.generated.h",
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\healthchecker\\intermediate\\build\\win64\\unrealeditor\\inc\\healthchecker\\uht\\healthcheckersettings.generated.h",
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\healthchecker\\intermediate\\build\\win64\\unrealeditor\\inc\\healthchecker\\uht\\healthcheckersettings.gen.cpp"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}
