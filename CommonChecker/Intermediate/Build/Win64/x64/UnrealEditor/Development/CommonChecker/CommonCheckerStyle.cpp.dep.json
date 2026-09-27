@@ -1,0 +1,26 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\commonchecker\\source\\commonchecker\\private\\commoncheckerstyle.cpp",
+        "ProvidedModule": "",
+        "PCH": "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\intermediate\\build\\win64\\x64\\custonpluginseditor\\development\\unrealed\\sharedpch.unrealed.project.valapi.valexpapi.cpp20.h.pch",
+        "Includes": [
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\commonchecker\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\commonchecker\\definitions.commonchecker.h",
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\commonchecker\\source\\commonchecker\\public\\commoncheckerstyle.h",
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\commonchecker\\source\\commonchecker\\public\\commonchecker.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\slatecore\\public\\styling\\slatestyleregistry.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\engine\\public\\slate\\slategameresources.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\projects\\public\\interfaces\\ipluginmanager.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\projects\\public\\plugindescriptor.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\projects\\public\\custombuildsteps.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\projects\\public\\localizationdescriptor.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\projects\\public\\moduledescriptor.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\projects\\public\\plugindisalloweddescriptor.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\projects\\public\\pluginreferencedescriptor.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\projects\\public\\versescope.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\slatecore\\public\\styling\\slatestylemacros.h"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}
