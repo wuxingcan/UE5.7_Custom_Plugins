@@ -1,0 +1,12 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.FastLight.cpp.obj": [
+			"PerModuleInline.gen.cpp.obj",
+			"FastLight.cpp.obj",
+			"FastLightAim.cpp.obj",
+			"FastLightAimVisualizer.cpp.obj",
+			"SFastLightPanel.cpp.obj"
+		]
+	}
+}

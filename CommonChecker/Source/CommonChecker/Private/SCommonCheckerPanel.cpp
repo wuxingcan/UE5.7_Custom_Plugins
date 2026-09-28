@@ -18,6 +18,7 @@
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/SWindow.h"
 #include "Widgets/Images/SImage.h"
+#include "Widgets/Layout/SSplitter.h"
 #include "ContentBrowserModule.h"
 #include "IContentBrowserSingleton.h"
 #include "AssetRegistry/AssetData.h"
@@ -101,6 +102,11 @@ void SCommonCheckerPanel::Construct(const FArguments& InArgs)
 
 	ChildSlot
 	[
+		SNew(SScrollBox)
+		.Orientation(Orient_Vertical)
+		.ScrollBarAlwaysVisible(true)
+		+ SScrollBox::Slot()
+		[
 		SNew(SBorder)
 		.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
 		.Padding(0.f)
@@ -121,6 +127,48 @@ void SCommonCheckerPanel::Construct(const FArguments& InArgs)
 				]
 				+ SHorizontalBox::Slot()
 				.AutoWidth()
+				.Padding(0.f, 0.f, 4.f, 0.f)
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("ScopeLevel", "当前关卡"))
+					.ToolTipText(LOCTEXT("ScopeLevelTip", "只检查当前打开关卡里的 Actor、组件和蓝图实例"))
+					.ButtonColorAndOpacity_Lambda([this]()
+					{
+						return FSlateColor(CheckScope == ECommonCheckerScope::CurrentLevel ? FLinearColor(0.10f, 0.35f, 0.62f) : FLinearColor(0.18f, 0.18f, 0.18f));
+					})
+					.OnClicked_Lambda([this]()
+					{
+						CheckScope = ECommonCheckerScope::CurrentLevel;
+						if(FolderPathText.IsValid())
+						{
+							FolderPathText->SetText(GetFolderPathText());
+						}
+						return FReply::Handled();
+					})
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(0.f, 0.f, 16.f, 0.f)
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("ScopeFolder", "内容目录"))
+					.ToolTipText(LOCTEXT("ScopeFolderTip", "只检查内容浏览器选中目录里的网格、材质和贴图"))
+					.ButtonColorAndOpacity_Lambda([this]()
+					{
+						return FSlateColor(CheckScope == ECommonCheckerScope::ContentFolder ? FLinearColor(0.10f, 0.35f, 0.62f) : FLinearColor(0.18f, 0.18f, 0.18f));
+					})
+					.OnClicked_Lambda([this]()
+					{
+						CheckScope = ECommonCheckerScope::ContentFolder;
+						if(FolderPathText.IsValid())
+						{
+							FolderPathText->SetText(GetFolderPathText());
+						}
+						return FReply::Handled();
+					})
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
 				.Padding(0.f, 0.f, 16.f, 0.f)
 				[
 					SNew(SButton)
@@ -134,27 +182,6 @@ void SCommonCheckerPanel::Construct(const FArguments& InArgs)
 					SAssignNew(FolderPathText, STextBlock)
 					.Text(this, &SCommonCheckerPanel::GetFolderPathText)
 					.Font(FAppStyle::GetFontStyle("NormalFont"))
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.VAlign(VAlign_Center)
-				.Padding(8.f, 0.f, 4.f, 0.f)
-				[
-					SNew(STextBlock)
-					.Text(LOCTEXT("DisplayCount", "显示条数"))
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				[
-					SNew(SSpinBox<int32>)
-					.MinValue(1)
-					.MaxValue(100)
-					.Value_Lambda([this]() { return MaxDisplayRows; })
-					.OnValueChanged_Lambda([this](int32 NewValue)
-					{
-						MaxDisplayRows = FMath::Max(1, NewValue);
-						RebuildResults();
-					})
 				]
 			]
 			+ SVerticalBox::Slot()
@@ -186,8 +213,9 @@ void SCommonCheckerPanel::Construct(const FArguments& InArgs)
 			.FillHeight(1.f)
 			.Padding(12.f, 10.f)
 			[
-				SAssignNew(ResultsBox, SScrollBox)
+				SAssignNew(ResultsBox, SVerticalBox)
 			]
+		]
 		]
 	];
 
@@ -196,8 +224,22 @@ void SCommonCheckerPanel::Construct(const FArguments& InArgs)
 
 FReply SCommonCheckerPanel::OnCheckClicked()
 {
-	UCommonCheckerEditorSubsystem::RunCommonCheckerForFolders(FolderPaths, true);
+	if(CheckScope == ECommonCheckerScope::ContentFolder)
+	{
+		TArray<FString> Paths = FolderPaths;
+		if(Paths.Num() == 0)
+		{
+			Paths.Add(TEXT("/Game"));
+		}
+		UCommonCheckerEditorSubsystem::RunCommonCheckerForFolders(Paths, true, ECommonCheckerScope::ContentFolder);
+	}
+	else
+	{
+		UCommonCheckerEditorSubsystem::RunCommonCheckerForFolders(TArray<FString>(), true, ECommonCheckerScope::CurrentLevel);
+	}
 	ReportView = CommonCheckerReport::GetLast();
+	SelectedSectionIndex = 0;
+	SelectedRowIndex = INDEX_NONE;
 	RebuildResults();
 	return FReply::Handled();
 }
@@ -219,11 +261,15 @@ FText SCommonCheckerPanel::GetSettingsButtonText() const
 
 FText SCommonCheckerPanel::GetFolderPathText() const
 {
-	if(FolderPaths.Num() == 0)
+	if(CheckScope == ECommonCheckerScope::ContentFolder)
 	{
-		return LOCTEXT("NoFolder", "检测范围：全部资产");
+		if(FolderPaths.Num() == 0)
+		{
+			return LOCTEXT("FolderScopeAll", "检查范围：内容目录 /Game");
+		}
+		return FText::FromString(FString::Printf(TEXT("检查范围：内容目录 %s"), *FString::Join(FolderPaths, TEXT(", "))));
 	}
-	return FText::FromString(FString::Printf(TEXT("检测范围：%s"), *FString::Join(FolderPaths, TEXT(", "))));
+	return LOCTEXT("LevelScope", "检查范围：当前打开的关卡");
 }
 
 FText SCommonCheckerPanel::GetScoreLabel(const FString& Score) const
@@ -323,13 +369,18 @@ void SCommonCheckerPanel::SyncContentBrowserToAsset(const FString& AssetPath) co
 	}
 }
 
-FReply SCommonCheckerPanel::OnRowClicked(const FCommonCheckerTableRow& Row) const
+FReply SCommonCheckerPanel::OnDetailRowClicked(int32 RowIndex, FString AssetPath)
 {
-	SyncContentBrowserToAsset(Row.AssetPath);
+	SelectedRowIndex = RowIndex;
+	if(!AssetPath.IsEmpty())
+	{
+		SyncContentBrowserToAsset(AssetPath);
+	}
+	RebuildResults();
 	return FReply::Handled();
 }
 
-TSharedRef<SWidget> SCommonCheckerPanel::BuildTableRow(const FCommonCheckerTableRow& Row, bool bHeader) const
+TSharedRef<SWidget> SCommonCheckerPanel::BuildTableRow(const FCommonCheckerTableRow& Row, bool bHeader, bool bSelected, int32 RowIndex)
 {
 	FString RatioText = TEXT("-");
 	if(bHeader)
@@ -363,6 +414,12 @@ TSharedRef<SWidget> SCommonCheckerPanel::BuildTableRow(const FCommonCheckerTable
 		NameText = FString::Printf(TEXT("提醒  %s"), *Row.Label);
 	}
 
+	if(bSelected)
+	{
+		RowColor = FLinearColor(0.05f, 0.28f, 0.48f, 0.95f);
+		TextColor = FLinearColor::White;
+	}
+
 	TSharedRef<SWidget> RowContent = SNew(SBorder)
 		.BorderImage(FAppStyle::GetBrush(bHeader ? "DetailsView.CategoryTop" : "WhiteBrush"))
 		.BorderBackgroundColor(bHeader ? FLinearColor(0.08f, 0.08f, 0.08f, 1.f) : RowColor)
@@ -376,7 +433,7 @@ TSharedRef<SWidget> SCommonCheckerPanel::BuildTableRow(const FCommonCheckerTable
 			+ SHorizontalBox::Slot().FillWidth(0.20f)[ MakeCell(RatioText, bHeader, TextColor) ]
 		];
 
-	if(bHeader || Row.AssetPath.IsEmpty())
+	if(bHeader)
 	{
 		return RowContent;
 	}
@@ -384,20 +441,20 @@ TSharedRef<SWidget> SCommonCheckerPanel::BuildTableRow(const FCommonCheckerTable
 	return SNew(SButton)
 		.ButtonStyle(FAppStyle::Get(), "NoBorder")
 		.ForegroundColor(FSlateColor::UseForeground())
-		.OnClicked_Lambda([this, Row]()
+		.OnClicked_Lambda([this, RowIndex, AssetPath = Row.AssetPath]()
 		{
-			return OnRowClicked(Row);
+			return OnDetailRowClicked(RowIndex, AssetPath);
 		})
-		.ToolTipText(FText::FromString(FString::Printf(TEXT("点击跳转到资产: %s"), *Row.AssetPath)))
+		.ToolTipText(Row.AssetPath.IsEmpty()
+			? LOCTEXT("SelectRowTip", "选中这一项")
+			: FText::FromString(FString::Printf(TEXT("选中并跳转到资产: %s"), *Row.AssetPath)))
 		[
 			RowContent
 		];
 }
 
-TSharedRef<SWidget> SCommonCheckerPanel::BuildSection(const FCommonCheckerTableSection& Section)
+TSharedRef<SWidget> SCommonCheckerPanel::BuildSectionDetail(const FCommonCheckerTableSection& Section)
 {
-	const bool bCollapsed = IsSectionCollapsed(Section.Title);
-	const bool bEnlarged = IsSectionEnlarged(Section.Title);
 	TArray<FCommonCheckerTableRow> OrderedRows = Section.Rows;
 	OrderedRows.StableSort([](const FCommonCheckerTableRow& A, const FCommonCheckerTableRow& B)
 	{
@@ -409,131 +466,151 @@ TSharedRef<SWidget> SCommonCheckerPanel::BuildSection(const FCommonCheckerTableS
 		};
 		return Rank(A.Score) < Rank(B.Score);
 	});
-	const int32 RowLimit = bEnlarged ? OrderedRows.Num() : FMath::Min(MaxDisplayRows, OrderedRows.Num());
+
 	TSharedRef<SVerticalBox> Table = SNew(SVerticalBox);
 	FCommonCheckerTableRow HeaderRow;
-	Table->AddSlot().AutoHeight()[ BuildTableRow(HeaderRow, true) ];
-	for(int32 Index = 0; Index < RowLimit; ++Index)
+	Table->AddSlot().AutoHeight()[ BuildTableRow(HeaderRow, true, false, INDEX_NONE) ];
+	for(int32 RowIndex = 0; RowIndex < OrderedRows.Num(); ++RowIndex)
 	{
-		Table->AddSlot().AutoHeight()[ BuildTableRow(OrderedRows[Index], false) ];
+		Table->AddSlot().AutoHeight()[ BuildTableRow(OrderedRows[RowIndex], false, RowIndex == SelectedRowIndex, RowIndex) ];
 	}
 
-	TSharedRef<SWidget> TableWidget = Table;
-	if(bEnlarged)
-	{
-		TableWidget = SNew(SBox)
-			.MinDesiredHeight(280.f)
-			.MaxDesiredHeight(560.f)
-			[
-				SNew(SScrollBox)
-				+ SScrollBox::Slot()
-				[
-					Table
-				]
-			];
-	}
-
-	const FString SectionTitle = Section.Title;
-	return SNew(SBorder)
-		.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
-		.Padding(8.f)
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(0.f, 0.f, 0.f, 8.f)
 		[
-			SNew(SVerticalBox)
-			+ SVerticalBox::Slot()
-			.AutoHeight()
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.VAlign(VAlign_Center)
+			.Padding(0.f, 0.f, 8.f, 0.f)
 			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.VAlign(VAlign_Center)
-				.Padding(0.f, 0.f, 8.f, 0.f)
-				[
-					SNew(SImage)
-					.Image(GetScoreIcon(Section.Score))
-					.DesiredSizeOverride(FVector2D(18.f, 18.f))
-				]
-				+ SHorizontalBox::Slot()
-				.FillWidth(1.f)
-				.VAlign(VAlign_Center)
+				SNew(SImage)
+				.Image(GetScoreIcon(Section.Score))
+				.DesiredSizeOverride(FVector2D(18.f, 18.f))
+			]
+			+ SHorizontalBox::Slot()
+			.FillWidth(1.f)
+			.VAlign(VAlign_Center)
+			[
+				SNew(SVerticalBox)
+				+ SVerticalBox::Slot().AutoHeight()
 				[
 					SNew(STextBlock)
 					.Text(FText::FromString(Section.Title))
 					.Font(FAppStyle::GetFontStyle("BoldFont"))
 				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.VAlign(VAlign_Center)
-				.Padding(8.f, 0.f, 8.f, 0.f)
+				+ SVerticalBox::Slot().AutoHeight()
+				[
+					SNew(STextBlock)
+					.Text(FText::FromString(Section.EnglishTitle))
+					.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+				]
+			]
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.VAlign(VAlign_Center)
+			[
+				SNew(STextBlock)
+				.Text(GetScoreLabel(Section.Score))
+				.ColorAndOpacity(GetScoreColor(Section.Score))
+				.Font(FAppStyle::GetFontStyle("BoldFont"))
+			]
+		]
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(0.f, 0.f, 0.f, 8.f)
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString(Section.Explanation))
+			.AutoWrapText(true)
+		]
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(0.f, 0.f, 0.f, 10.f)
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString(Section.Description))
+			.AutoWrapText(true)
+			.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+		]
+		+ SVerticalBox::Slot()
+		.FillHeight(1.f)
+		[
+			SNew(SScrollBox)
+			+ SScrollBox::Slot()
+			[
+				OrderedRows.Num() > 0
+					? StaticCastSharedRef<SWidget>(Table)
+					: StaticCastSharedRef<SWidget>(SNew(STextBlock).Text(LOCTEXT("NoRows", "这一类没有具体执行项。")))
+			]
+		];
+}
+
+TSharedRef<SWidget> SCommonCheckerPanel::BuildCategoryList()
+{
+	TSharedRef<SVerticalBox> List = SNew(SVerticalBox);
+	for(int32 Index = 0; Index < ReportView.Sections.Num(); ++Index)
+	{
+		const FCommonCheckerTableSection& Section = ReportView.Sections[Index];
+		const bool bSelected = Index == SelectedSectionIndex;
+		List->AddSlot()
+		.AutoHeight()
+		.Padding(0.f, 0.f, 0.f, 2.f)
+		[
+			SNew(SButton)
+			.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+			.OnClicked_Lambda([this, Index]()
+			{
+				return OnCategoryClicked(Index);
+			})
+			[
+				SNew(SBorder)
+				.BorderImage(FAppStyle::GetBrush("WhiteBrush"))
+				.BorderBackgroundColor(bSelected ? FLinearColor(0.16f, 0.16f, 0.16f, 1.f) : FLinearColor(0.f, 0.f, 0.f, 0.f))
+				.Padding(FMargin(8.f, 6.f))
 				[
 					SNew(SHorizontalBox)
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
 					.VAlign(VAlign_Center)
-					.Padding(0.f, 0.f, 6.f, 0.f)
+					.Padding(0.f, 0.f, 8.f, 0.f)
 					[
 						SNew(SImage)
 						.Image(GetScoreIcon(Section.Score))
 						.DesiredSizeOverride(FVector2D(14.f, 14.f))
 					]
 					+ SHorizontalBox::Slot()
+					.FillWidth(1.f)
+					.VAlign(VAlign_Center)
+					[
+						SNew(STextBlock)
+						.Text(FText::FromString(Section.Title))
+						.ColorAndOpacity(bSelected ? FLinearColor::White : FLinearColor(0.82f, 0.82f, 0.82f))
+					]
+					+ SHorizontalBox::Slot()
 					.AutoWidth()
 					.VAlign(VAlign_Center)
+					.Padding(8.f, 0.f, 0.f, 0.f)
 					[
 						SNew(STextBlock)
 						.Text(GetScoreLabel(Section.Score))
 						.ColorAndOpacity(GetScoreColor(Section.Score))
-						.Font(FAppStyle::GetFontStyle("BoldFont"))
-					]
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.Padding(0.f, 0.f, 4.f, 0.f)
-				[
-					SNew(SButton)
-					.Text(bCollapsed ? LOCTEXT("ExpandSection", "展开") : LOCTEXT("CollapseSection", "折叠"))
-					.ToolTipText(bCollapsed ? LOCTEXT("ExpandSectionTip", "展开这个检查区域") : LOCTEXT("CollapseSectionTip", "折叠这个检查区域"))
-					.OnClicked_Lambda([this, SectionTitle]()
-					{
-						return ToggleSectionCollapsed(SectionTitle);
-					})
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				[
-					SNew(SButton)
-					.Text(bEnlarged ? LOCTEXT("ShrinkSection", "缩小") : LOCTEXT("EnlargeSection", "放大"))
-					.ToolTipText(bEnlarged ? LOCTEXT("ShrinkSectionTip", "缩小这个检查区域") : LOCTEXT("EnlargeSectionTip", "放大这个检查区域并显示全部行"))
-					.OnClicked_Lambda([this, SectionTitle]()
-					{
-						return ToggleSectionEnlarged(SectionTitle);
-					})
-				]
-			]
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			.Padding(0.f, 8.f, 0.f, 0.f)
-			[
-				SNew(SBox)
-				.Visibility(bCollapsed ? EVisibility::Collapsed : EVisibility::Visible)
-				[
-					SNew(SVerticalBox)
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					.Padding(0.f, 0.f, 0.f, 8.f)
-					[
-						SNew(STextBlock)
-						.Text(FText::FromString(Section.Description))
-						.AutoWrapText(true)
-						.ColorAndOpacity(FSlateColor::UseSubduedForeground())
-					]
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					[
-						TableWidget
 					]
 				]
 			]
 		];
+	}
+	return List;
+}
+
+FReply SCommonCheckerPanel::OnCategoryClicked(int32 SectionIndex)
+{
+	SelectedSectionIndex = SectionIndex;
+	SelectedRowIndex = INDEX_NONE;
+	RebuildResults();
+	return FReply::Handled();
 }
 
 void SCommonCheckerPanel::RebuildResults()
@@ -556,6 +633,7 @@ void SCommonCheckerPanel::RebuildResults()
 	}
 
 	ResultsBox->AddSlot()
+	.AutoHeight()
 	.Padding(0.f, 0.f, 0.f, 10.f)
 	[
 		SNew(SBorder)
@@ -629,6 +707,7 @@ void SCommonCheckerPanel::RebuildResults()
 	if(!ReportView.OverallDescription.IsEmpty())
 	{
 		ResultsBox->AddSlot()
+		.AutoHeight()
 		.Padding(0.f, 0.f, 0.f, 10.f)
 		[
 			SNew(STextBlock)
@@ -647,14 +726,39 @@ void SCommonCheckerPanel::RebuildResults()
 		return;
 	}
 
-	for(const FCommonCheckerTableSection& Section : ReportView.Sections)
-	{
-		ResultsBox->AddSlot()
-		.Padding(0.f, 0.f, 0.f, 10.f)
+	SelectedSectionIndex = FMath::Clamp(SelectedSectionIndex, 0, ReportView.Sections.Num() - 1);
+	const FCommonCheckerTableSection& SelectedSection = ReportView.Sections[SelectedSectionIndex];
+
+	ResultsBox->AddSlot()
+	.FillHeight(1.f)
+	[
+		SNew(SSplitter)
+		.Orientation(Orient_Horizontal)
+		+ SSplitter::Slot()
+		.Value(0.42f)
 		[
-			BuildSection(Section)
-		];
-	}
+			SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+			.Padding(8.f)
+			[
+				SNew(SScrollBox)
+				+ SScrollBox::Slot()
+				[
+					BuildCategoryList()
+				]
+			]
+		]
+		+ SSplitter::Slot()
+		.Value(0.58f)
+		[
+			SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush("ToolPanel.DarkGroupBorder"))
+			.Padding(12.f)
+			[
+				BuildSectionDetail(SelectedSection)
+			]
+		]
+	];
 }
 
 #undef LOCTEXT_NAMESPACE

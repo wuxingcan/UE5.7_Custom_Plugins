@@ -3,11 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "CommonCheckerEditorSubsystem.h"
 #include "CommonCheckerReport.h"
 #include "Widgets/SCompoundWidget.h"
 
 class IDetailsView;
-class SScrollBox;
+class SVerticalBox;
 
 class SCommonCheckerPanel : public SCompoundWidget
 {
@@ -27,9 +28,11 @@ private:
 	FReply OnCheckClicked();
 	FReply OnSettingsClicked();
 	void RebuildResults();
-	TSharedRef<SWidget> BuildSection(const FCommonCheckerTableSection& Section);
-	TSharedRef<SWidget> BuildTableRow(const FCommonCheckerTableRow& Row, bool bHeader) const;
-	FReply OnRowClicked(const FCommonCheckerTableRow& Row) const;
+	TSharedRef<SWidget> BuildCategoryList();
+	TSharedRef<SWidget> BuildSectionDetail(const FCommonCheckerTableSection& Section);
+	TSharedRef<SWidget> BuildTableRow(const FCommonCheckerTableRow& Row, bool bHeader, bool bSelected, int32 RowIndex);
+	FReply OnCategoryClicked(int32 SectionIndex);
+	FReply OnDetailRowClicked(int32 RowIndex, FString AssetPath);
 	void SyncContentBrowserToAsset(const FString& AssetPath) const;
 	FText GetFolderPathText() const;
 	FText GetSettingsButtonText() const;
@@ -41,7 +44,11 @@ private:
 	FReply ToggleSectionCollapsed(const FString& Title);
 	FReply ToggleSectionEnlarged(const FString& Title);
 
+	int32 SelectedSectionIndex = 0;
+	int32 SelectedRowIndex = INDEX_NONE;
+
 	TArray<FString> FolderPaths;
+	ECommonCheckerScope CheckScope = ECommonCheckerScope::CurrentLevel;
 	FCommonCheckerReportView ReportView;
 	int32 MaxDisplayRows = 10;
 	bool bShowSettings = false;
@@ -50,6 +57,6 @@ private:
 
 	TSharedPtr<IDetailsView> SettingsView;
 	TSharedPtr<SBox> SettingsContainer;
-	TSharedPtr<SScrollBox> ResultsBox;
+	TSharedPtr<SVerticalBox> ResultsBox;
 	TSharedPtr<STextBlock> FolderPathText;
 };

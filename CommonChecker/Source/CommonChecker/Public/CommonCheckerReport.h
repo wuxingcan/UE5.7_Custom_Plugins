@@ -20,6 +20,8 @@ struct FCommonCheckerTableRow
 struct FCommonCheckerTableSection
 {
 	FString Title;
+	FString EnglishTitle;
+	FString Explanation;
 	FString Score;
 	FString Description;
 	TArray<FCommonCheckerTableRow> Rows;

@@ -57,17 +57,17 @@ struct Z_Construct_UClass_UCommonCheckerSettings_Statics
 #if WITH_METADATA
 	static constexpr UECodeGen_Private::FMetaDataPairParam Class_MetaDataParams[] = {
 #if !UE_BUILD_SHIPPING
-		{ "Comment", "/**\n * Settings for Health Checker\n */" },
+		{ "Comment", "/**\n * Settings for Common Checker\n */" },
 #endif
-		{ "DisplayName", "Health Checker" },
+		{ "DisplayName", "Common Checker" },
 		{ "IncludePath", "CommonCheckerSettings.h" },
 		{ "ModuleRelativePath", "Public/CommonCheckerSettings.h" },
 #if !UE_BUILD_SHIPPING
-		{ "ToolTip", "Settings for Health Checker" },
+		{ "ToolTip", "Settings for Common Checker" },
 #endif
 	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_bUnloadLevelsAfterCheck_MetaData[] = {
-		{ "Category", "Health Checker Settings" },
+		{ "Category", "Common Checker Settings" },
 #if !UE_BUILD_SHIPPING
 		{ "Comment", "/**\n\x09 * \xe8\xbf\x90\xe8\xa1\x8c CommonChecker \xe5\x90\x8e\xe5\x8d\xb8\xe8\xbd\xbd\xe5\x85\xb3\xe5\x8d\xa1\xe5\x92\x8c WorldPartition \xe5\x8d\x95\xe5\x85\x83\n\x09 */" },
 #endif
@@ -77,7 +77,7 @@ struct Z_Construct_UClass_UCommonCheckerSettings_Statics
 #endif
 	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_bIgnoreEditorOnlyActorsAndComponents_MetaData[] = {
-		{ "Category", "Health Checker Settings" },
+		{ "Category", "Common Checker Settings" },
 #if !UE_BUILD_SHIPPING
 		{ "Comment", "/**\n\x09 * \xe5\xbf\xbd\xe7\x95\xa5 EditorOnly \xe7\x9a\x84 Actor \xe5\x92\x8c Component\n\x09 */" },
 #endif
@@ -87,7 +87,7 @@ struct Z_Construct_UClass_UCommonCheckerSettings_Statics
 #endif
 	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_bPostToMapCheck_MetaData[] = {
-		{ "Category", "Health Checker Settings" },
+		{ "Category", "Common Checker Settings" },
 #if !UE_BUILD_SHIPPING
 		{ "Comment", "/**\n\x09 * \xe5\xb0\x86\xe8\xad\xa6\xe5\x91\x8a\xe5\x8f\x91\xe9\x80\x81\xe5\x88\xb0 MapCheck \xe7\xaa\x97\xe5\x8f\xa3\n\x09 */" },
 #endif
@@ -97,7 +97,7 @@ struct Z_Construct_UClass_UCommonCheckerSettings_Statics
 #endif
 	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_bPostToLog_MetaData[] = {
-		{ "Category", "Health Checker Settings" },
+		{ "Category", "Common Checker Settings" },
 #if !UE_BUILD_SHIPPING
 		{ "Comment", "/**\n\x09 * \xe5\xb0\x86\xe8\xad\xa6\xe5\x91\x8a\xe5\x8f\x91\xe9\x80\x81\xe5\x88\xb0\xe8\xbe\x93\xe5\x87\xba\xe6\x97\xa5\xe5\xbf\x97\n\x09 */" },
 #endif
@@ -107,7 +107,7 @@ struct Z_Construct_UClass_UCommonCheckerSettings_Statics
 #endif
 	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_bOpenReportWhenFinished_MetaData[] = {
-		{ "Category", "Health Checker Settings" },
+		{ "Category", "Common Checker Settings" },
 #if !UE_BUILD_SHIPPING
 		{ "Comment", "/**\n\x09 * \xe5\xae\x8c\xe6\x88\x90\xe5\x90\x8e\xe6\x89\x93\xe5\xbc\x80\xe6\x8a\xa5\xe5\x91\x8a\n\x09 */" },
 #endif
@@ -117,7 +117,7 @@ struct Z_Construct_UClass_UCommonCheckerSettings_Statics
 #endif
 	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_bOpenMapCheckWhenFinished_MetaData[] = {
-		{ "Category", "Health Checker Settings" },
+		{ "Category", "Common Checker Settings" },
 #if !UE_BUILD_SHIPPING
 		{ "Comment", "/**\n\x09 * \xe5\xae\x8c\xe6\x88\x90\xe5\x90\x8e\xe6\x89\x93\xe5\xbc\x80 MapCheck \xe7\xaa\x97\xe5\x8f\xa3\n\x09 */" },
 #endif
@@ -127,7 +127,7 @@ struct Z_Construct_UClass_UCommonCheckerSettings_Statics
 #endif
 	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_bUseUserNameInReport_MetaData[] = {
-		{ "Category", "Health Checker Settings" },
+		{ "Category", "Common Checker Settings" },
 #if !UE_BUILD_SHIPPING
 		{ "Comment", "/**\n\x09 * \xe5\x9c\xa8\xe6\x8a\xa5\xe5\x91\x8a\xe4\xb8\xad\xe5\x8c\x85\xe5\x90\xab\xe7\x94\xa8\xe6\x88\xb7\xe5\x90\x8d\n\x09 */" },
 #endif
@@ -137,7 +137,7 @@ struct Z_Construct_UClass_UCommonCheckerSettings_Statics
 #endif
 	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_bAddEngineVersionToSearchHints_MetaData[] = {
-		{ "Category", "Health Checker Settings" },
+		{ "Category", "Common Checker Settings" },
 #if !UE_BUILD_SHIPPING
 		{ "Comment", "/**\n\x09 * \xe5\x9c\xa8\xe6\x90\x9c\xe7\xb4\xa2\xe6\x8f\x90\xe7\xa4\xba\xe4\xb8\xad\xe9\x99\x84\xe5\x8a\xa0\xe5\xbc\x95\xe6\x93\x8e\xe7\x89\x88\xe6\x9c\xac\xe4\xbf\xa1\xe6\x81\xaf\n\x09 */" },
 #endif
@@ -149,7 +149,7 @@ struct Z_Construct_UClass_UCommonCheckerSettings_Statics
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_ReportActorCategories_MetaData[] = {
 		{ "Bitmask", "" },
 		{ "BitmaskEnum", "/Script/CommonChecker.EBitActorCategory" },
-		{ "Category", "Health Checker Settings" },
+		{ "Category", "Common Checker Settings" },
 #if !UE_BUILD_SHIPPING
 		{ "Comment", "/**\n\x09 * \xe6\x8a\xa5\xe5\x91\x8a\xe4\xb8\xad\xe6\x98\xbe\xe7\xa4\xba\xe7\x9a\x84 Actor \xe7\xb1\xbb\xe5\x88\xab\n\x09 */" },
 #endif
@@ -1292,10 +1292,10 @@ UCommonCheckerSettings::~UCommonCheckerSettings() {}
 struct Z_CompiledInDeferFile_FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerSettings_h__Script_CommonChecker_Statics
 {
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_UCommonCheckerSettings, UCommonCheckerSettings::StaticClass, TEXT("UCommonCheckerSettings"), &Z_Registration_Info_UClass_UCommonCheckerSettings, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UCommonCheckerSettings), 1271640317U) },
+		{ Z_Construct_UClass_UCommonCheckerSettings, UCommonCheckerSettings::StaticClass, TEXT("UCommonCheckerSettings"), &Z_Registration_Info_UClass_UCommonCheckerSettings, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UCommonCheckerSettings), 1288075049U) },
 	};
 }; // Z_CompiledInDeferFile_FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerSettings_h__Script_CommonChecker_Statics 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerSettings_h__Script_CommonChecker_1983875603{
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerSettings_h__Script_CommonChecker_717588775{
 	TEXT("/Script/CommonChecker"),
 	Z_CompiledInDeferFile_FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerSettings_h__Script_CommonChecker_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerSettings_h__Script_CommonChecker_Statics::ClassInfo),
 	nullptr, 0,

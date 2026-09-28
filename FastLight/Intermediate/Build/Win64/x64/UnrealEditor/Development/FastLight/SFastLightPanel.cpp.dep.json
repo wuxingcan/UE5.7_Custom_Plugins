@@ -1,0 +1,32 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\fastlight\\source\\fastlight\\private\\sfastlightpanel.cpp",
+        "ProvidedModule": "",
+        "PCH": "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\intermediate\\build\\win64\\x64\\custonpluginseditor\\development\\unrealed\\sharedpch.unrealed.project.valapi.valexpapi.cpp20.h.pch",
+        "Includes": [
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\fastlight\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\fastlight\\definitions.fastlight.h",
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\fastlight\\source\\fastlight\\private\\sfastlightpanel.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\engine\\classes\\components\\locallightcomponent.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\engine\\classes\\components\\lightcomponent.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\engine\\classes\\components\\lightcomponentbase.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\lightcomponentbase.generated.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\lightcomponent.generated.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\locallightcomponent.generated.h",
+            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\fastlight\\source\\fastlight\\private\\fastlightshared.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\engine\\classes\\components\\directionallightcomponent.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\directionallightcomponent.generated.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\engine\\classes\\components\\pointlightcomponent.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\pointlightcomponent.generated.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\engine\\classes\\components\\rectlightcomponent.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\rectlightcomponent.generated.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\engine\\classes\\components\\spotlightcomponent.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\spotlightcomponent.generated.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\slate\\public\\widgets\\colors\\scolorblock.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\appframework\\public\\widgets\\colors\\scolorpicker.h",
+            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\runtime\\slate\\public\\widgets\\input\\sspinbox.h"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

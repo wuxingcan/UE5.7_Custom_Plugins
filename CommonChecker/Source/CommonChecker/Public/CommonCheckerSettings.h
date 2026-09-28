@@ -7,9 +7,9 @@
 #include "CommonCheckerSettings.generated.h"
 
 /**
- * Settings for Health Checker
+ * Settings for Common Checker
  */
-UCLASS(MinimalAPI, config=Game, DisplayName="Health Checker")
+UCLASS(MinimalAPI, config=Game, DisplayName="Common Checker")
 class UCommonCheckerSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
@@ -42,7 +42,7 @@ public:
 
 	static const FString& GetCommonCheckerDisplayString()
 	{
-		static const FString String = TEXT("Health Checker");
+		static const FString String = TEXT("Common Checker");
 		return String;
 	}
 
@@ -54,7 +54,7 @@ public:
 
 	static FText GetCommonCheckerDisplayText()
 	{
-		return NSLOCTEXT("CommonChecker", "CommonChecker", "Health Checker");
+		return NSLOCTEXT("CommonChecker", "CommonChecker", "Common Checker");
 	}
 
 public:
@@ -62,55 +62,55 @@ public:
 	/**
 	 * 运行 CommonChecker 后卸载关卡和 WorldPartition 单元
 	 */
-	UPROPERTY(config, EditAnywhere, Category="Health Checker Settings")
+	UPROPERTY(config, EditAnywhere, Category="Common Checker Settings")
 	bool bUnloadLevelsAfterCheck = true;
 
 	/**
 	 * 忽略 EditorOnly 的 Actor 和 Component
 	 */
-	UPROPERTY(config, EditAnywhere, Category="Health Checker Settings")
+	UPROPERTY(config, EditAnywhere, Category="Common Checker Settings")
 	bool bIgnoreEditorOnlyActorsAndComponents = true;
 
 	/**
 	 * 将警告发送到 MapCheck 窗口
 	 */
-	UPROPERTY(config, EditAnywhere, Category="Health Checker Settings")
+	UPROPERTY(config, EditAnywhere, Category="Common Checker Settings")
 	bool bPostToMapCheck = true;
 
 	/**
 	 * 将警告发送到输出日志
 	 */
-	UPROPERTY(config, EditAnywhere, Category="Health Checker Settings")
+	UPROPERTY(config, EditAnywhere, Category="Common Checker Settings")
 	bool bPostToLog = true;
 
 	/**
 	 * 完成后打开报告
 	 */
-	UPROPERTY(config, EditAnywhere, Category="Health Checker Settings")
+	UPROPERTY(config, EditAnywhere, Category="Common Checker Settings")
 	bool bOpenReportWhenFinished = true;
 
 	/**
 	 * 完成后打开 MapCheck 窗口
 	 */
-	UPROPERTY(config, EditAnywhere, Category="Health Checker Settings")
+	UPROPERTY(config, EditAnywhere, Category="Common Checker Settings")
 	bool bOpenMapCheckWhenFinished = true;
 
 	/**
 	 * 在报告中包含用户名
 	 */
-	UPROPERTY(config, EditAnywhere, Category="Health Checker Settings")
+	UPROPERTY(config, EditAnywhere, Category="Common Checker Settings")
 	bool bUseUserNameInReport = false;
 
 	/**
 	 * 在搜索提示中附加引擎版本信息
 	 */
-	UPROPERTY(config, EditAnywhere, Category="Health Checker Settings")
+	UPROPERTY(config, EditAnywhere, Category="Common Checker Settings")
 	bool bAddEngineVersionToSearchHints = true;
 
 	/**
 	 * 报告中显示的 Actor 类别
 	 */
-	UPROPERTY(config, EditAnywhere, Category="Health Checker Settings", meta=(Bitmask, BitmaskEnum="/Script/CommonChecker.EBitActorCategory"))
+	UPROPERTY(config, EditAnywhere, Category="Common Checker Settings", meta=(Bitmask, BitmaskEnum="/Script/CommonChecker.EBitActorCategory"))
 	int32 ReportActorCategories = INT_MAX;
 
 public:

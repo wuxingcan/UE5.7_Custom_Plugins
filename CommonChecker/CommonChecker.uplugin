@@ -2,7 +2,7 @@
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.11",
-	"FriendlyName": "Health Checker",
+	"FriendlyName": "Common Checker",
 	"Description": "Health check tool for diagnosing project quality and visualizing optimization opportunities.",
 	"Category": "Performance",
 	"CreatedBy": "UMIUSHI Inc.",

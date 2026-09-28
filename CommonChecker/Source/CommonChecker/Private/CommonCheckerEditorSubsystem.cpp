@@ -89,9 +89,13 @@
 #include "Engine/Texture2DArray.h"
 #include "Engine/TextureCube.h"
 #include "Engine/VolumeTexture.h"
+#include "Engine/TextureRenderTarget.h"
 #include "Engine/TextureRenderTarget2D.h"
 
 #include "Engine/SkeletalMesh.h"
+#include "Engine/StaticMesh.h"
+#include "Materials/MaterialInterface.h"
+#include "Misc/App.h"
 #include "Rendering/SkeletalMeshModel.h"
 #include "Rendering/SkeletalMeshLODModel.h"
 #include "Rendering/SkeletalMeshRenderData.h"
@@ -207,7 +211,7 @@ void ShowCommonCheckerSettings()
 {
 	if(ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
-		SettingsModule->ShowViewer("Project", "Plugins", "Health Checker");
+		SettingsModule->ShowViewer("Project", "Plugins", "Common Checker");
 	}
 }
 
@@ -2284,6 +2288,379 @@ struct FCommonCheckerContext
 	}
 };
 
+namespace
+{
+	FString NormalizeContentFolder(const FString& Path)
+	{
+		FString Result = Path;
+		Result.ReplaceInline(TEXT("\\"), TEXT("/"));
+		while(Result.EndsWith(TEXT("/")))
+		{
+			Result.LeftChopInline(1);
+		}
+		return Result;
+	}
+
+	void AddFolderSection(FCommonCheckerReportView& View, const FString& Title, const FString& EnglishTitle, const FString& Explanation, EScore Score, const FString& Description, const TArray<FCommonCheckerTableRow>& Rows)
+	{
+		if(Rows.Num() == 0)
+		{
+			return;
+		}
+
+		FCommonCheckerTableSection& Section = View.Sections.AddDefaulted_GetRef();
+		Section.Title = Title;
+		Section.EnglishTitle = EnglishTitle;
+		Section.Explanation = Explanation;
+		Section.Score = HC4UE::GetScoreString(Score);
+		Section.Description = Description;
+		Section.Rows = Rows;
+	}
+
+	FCommonCheckerTableRow MakeAssetRow(const FString& Label, int32 Value, const FString& Unit, const FString& AssetPath, EScore Score)
+	{
+		FCommonCheckerTableRow Row;
+		Row.Label = Label;
+		Row.Value = Value;
+		Row.Unit = Unit;
+		Row.AssetPath = AssetPath;
+		Row.Score = HC4UE::GetScoreString(Score);
+		return Row;
+	}
+
+	bool RunContentFolderCheck(const TArray<FString>& InFolderPaths, bool bSkipAutoOpenReport)
+	{
+		using namespace HC4UE;
+
+		TArray<FString> FolderPaths = InFolderPaths;
+		if(FolderPaths.Num() == 0)
+		{
+			FolderPaths.Add(TEXT("/Game"));
+		}
+		for(FString& Folder : FolderPaths)
+		{
+			Folder = NormalizeContentFolder(Folder);
+		}
+
+		const UCommonCheckerSettings& Settings = *GetCommonCheckerSettings();
+		FScopedSlowTask Progress(100, FText::FromString(TEXT("正在检查内容目录...")));
+		Progress.MakeDialog(true);
+
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::Get().LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+		IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
+		AssetRegistry.SearchAllAssets(true);
+		Progress.EnterProgressFrame(10.f);
+
+		FARFilter AssetFilter;
+		AssetFilter.bRecursivePaths = true;
+		AssetFilter.bRecursiveClasses = true;
+		for(const FString& Folder : FolderPaths)
+		{
+			AssetFilter.PackagePaths.Add(FName(*Folder));
+		}
+		AssetFilter.ClassPaths.Add(UStaticMesh::StaticClass()->GetClassPathName());
+		AssetFilter.ClassPaths.Add(USkeletalMesh::StaticClass()->GetClassPathName());
+		AssetFilter.ClassPaths.Add(UMaterialInterface::StaticClass()->GetClassPathName());
+		AssetFilter.ClassPaths.Add(UTexture::StaticClass()->GetClassPathName());
+
+		TArray<FAssetData> FolderAssets;
+		AssetRegistry.GetAssets(AssetFilter, FolderAssets);
+		Progress.EnterProgressFrame(10.f);
+
+		struct FMeshStat
+		{
+			FString Path;
+			int32 Vertices = 0;
+			int32 Triangles = 0;
+			bool bNanite = false;
+			int32 NumLODs = 1;
+			int32 Bones = 0;
+		};
+		TArray<FMeshStat> StaticMeshes;
+		TArray<FMeshStat> SkeletalMeshes;
+		struct FMaterialStat
+		{
+			FString Path;
+			EMaterialBlendMode Blend = EMaterialBlendMode::Unknown;
+		};
+		TArray<FMaterialStat> Materials;
+		struct FTextureStat
+		{
+			FString Path;
+			int32 SizeX = 0;
+			int32 SizeY = 0;
+			ETextureSize Size = ETextureSize::SizeBelow64;
+			bool bStreaming = false;
+			bool bCompressed = true;
+		};
+		TArray<FTextureStat> Textures;
+
+		const int32 AssetCount = FMath::Max(FolderAssets.Num(), 1);
+		for(const FAssetData& AssetData : FolderAssets)
+		{
+			Progress.EnterProgressFrame(60.f / AssetCount);
+			if(Progress.ShouldCancel())
+			{
+				return false;
+			}
+
+			UObject* Asset = AssetData.GetAsset();
+			if(!Asset || Asset->IsA<UTextureRenderTarget>())
+			{
+				continue;
+			}
+
+			if(UStaticMesh* StaticMesh = Cast<UStaticMesh>(Asset))
+			{
+				FMeshStat& Stat = StaticMeshes.AddDefaulted_GetRef();
+				Stat.Path = StaticMesh->GetPathName();
+				Stat.bNanite = StaticMesh->HasValidNaniteData();
+				Stat.NumLODs = StaticMesh->GetNumLODs();
+				if(const FStaticMeshRenderData* RenderData = StaticMesh->GetRenderData())
+				{
+					if(RenderData->LODResources.Num() > 0)
+					{
+						Stat.Vertices = RenderData->LODResources[0].GetNumVertices();
+						Stat.Triangles = RenderData->LODResources[0].GetNumTriangles();
+					}
+				}
+			}
+			else if(USkeletalMesh* SkeletalMesh = Cast<USkeletalMesh>(Asset))
+			{
+				FMeshStat& Stat = SkeletalMeshes.AddDefaulted_GetRef();
+				Stat.Path = SkeletalMesh->GetPathName();
+				Stat.bNanite = IsNaniteMesh(SkeletalMesh);
+				Stat.NumLODs = SkeletalMesh->GetLODNum();
+				Stat.Bones = SkeletalMesh->GetRefSkeleton().GetNum();
+				if(const FSkeletalMeshRenderData* RenderData = SkeletalMesh->GetResourceForRendering())
+				{
+					if(RenderData->LODRenderData.Num() > 0)
+					{
+						Stat.Vertices = RenderData->LODRenderData[0].GetNumVertices();
+						Stat.Triangles = RenderData->LODRenderData[0].GetTotalFaces();
+					}
+				}
+			}
+			else if(const UMaterialInterface* Material = Cast<UMaterialInterface>(Asset))
+			{
+				FMaterialStat& Stat = Materials.AddDefaulted_GetRef();
+				Stat.Path = Material->GetPathName();
+				switch(Material->GetBlendMode())
+				{
+				case BLEND_Opaque:
+					Stat.Blend = EMaterialBlendMode::Opaque;
+					break;
+				case BLEND_Masked:
+					Stat.Blend = EMaterialBlendMode::Masked;
+					break;
+				case BLEND_Translucent:
+				case BLEND_Additive:
+				case BLEND_Modulate:
+				case BLEND_AlphaComposite:
+				case BLEND_AlphaHoldout:
+					Stat.Blend = EMaterialBlendMode::Translucent;
+					break;
+				default:
+					Stat.Blend = EMaterialBlendMode::Unknown;
+					break;
+				}
+			}
+			else if(const UTexture* Texture = Cast<UTexture>(Asset))
+			{
+				FTextureStat& Stat = Textures.AddDefaulted_GetRef();
+				Stat.Path = Texture->GetPathName();
+				Stat.SizeX = Texture->Source.GetSizeX();
+				Stat.SizeY = Texture->Source.GetSizeY();
+				if(Stat.SizeX <= 0 || Stat.SizeY <= 0)
+				{
+					Stat.SizeX = FMath::Max(1, FMath::RoundToInt(Texture->GetSurfaceWidth()));
+					Stat.SizeY = FMath::Max(1, FMath::RoundToInt(Texture->GetSurfaceHeight()));
+				}
+				Stat.Size = GetTextureSize(Stat.SizeX, Stat.SizeY);
+				Stat.bStreaming = Texture->GetStreamingIndex() != INDEX_NONE && !Texture->NeverStream;
+#if HC4UE_UE5
+				Stat.bCompressed = !Texture->IsUncompressed();
+#else
+				Stat.bCompressed = true;
+#endif
+			}
+		}
+
+		auto MeshLabel = [](const FString& Path)
+		{
+			return FPaths::GetExtension(Path);
+		};
+		auto WorstScore = [](EScore Current, EScore Next)
+		{
+			return Next > Current ? Next : Current;
+		};
+
+		FCommonCheckerReportView View;
+		View.bValid = true;
+		View.Project = FApp::GetProjectName();
+		View.Map = FString::Printf(TEXT("内容目录 %s"), *FString::Join(FolderPaths, TEXT(", ")));
+		View.Engine = FString::Printf(TEXT("UE%s - %s"), *FEngineVersion::Current().ToString(EVersionComponent::Patch), GetCommonCheckerEditorLanguage());
+		View.GeneratedBy = Settings.bUseUserNameInReport
+			? FString::Printf(TEXT("%s - %s"), FPlatformProcess::ComputerName(), FPlatformProcess::UserName())
+			: FString(TEXT("HC4UE"));
+		View.Version = UCommonCheckerSettings::GetVersion();
+		View.LastUpdate = FDateTime::Now().ToString();
+
+		TArray<FScore> Scores;
+
+		auto AddRankedMeshes = [&](const TCHAR* Title, const TCHAR* English, const TCHAR* Explanation, TArray<FMeshStat> Meshes, TFunctionRef<int32(const FMeshStat&)> ValueOf, const FIntScoreSettings& ScoreSettings, const TCHAR* Unit)
+		{
+			if(!ScoreSettings.bAllowHealthCheck)
+			{
+				return;
+			}
+			Meshes.Sort([&](const FMeshStat& A, const FMeshStat& B){ return ValueOf(A) > ValueOf(B); });
+			TArray<FCommonCheckerTableRow> Rows;
+			EScore Worst = EScore::A;
+			for(const FMeshStat& Mesh : Meshes)
+			{
+				const int32 Value = ValueOf(Mesh);
+				if(Value <= 0)
+				{
+					continue;
+				}
+				const FScore ItemScore = GetScore(Value, ScoreSettings);
+				Worst = WorstScore(Worst, ItemScore.Score);
+				Rows.Add(MakeAssetRow(MeshLabel(Mesh.Path), Value, Unit, Mesh.Path, ItemScore.Score));
+			}
+			if(Rows.Num() == 0)
+			{
+				return;
+			}
+			const FScore SectionScore = GetScore(ValueOf(Meshes[0]), ScoreSettings);
+			Scores.Add(SectionScore);
+			AddFolderSection(View, Title, English, Explanation, Worst, FString::Printf(TEXT("共 %d 项，最差值 %d。"), Rows.Num(), ValueOf(Meshes[0])), Rows);
+			(void)SectionScore;
+		};
+
+		AddRankedMeshes(TEXT("静态网格顶点数"), TEXT("StaticMesh Vertex Ranking"), TEXT("按 LOD0 顶点数检查目录中的静态网格。"), StaticMeshes, [](const FMeshStat& Mesh){ return Mesh.Vertices; }, Settings.StaticMeshCountScoreSettings, TEXT("vtx"));
+		AddRankedMeshes(TEXT("静态网格硬边顶点"), TEXT("StaticMesh Hard Edge Vertex Ranking"), TEXT("硬边会拆开共享顶点，硬边顶点过多会降低顶点缓存命中。"), StaticMeshes, [](const FMeshStat& Mesh){ return !Mesh.bNanite ? FMath::Max(0, Mesh.Vertices - Mesh.Triangles / 2) : 0; }, Settings.StaticMeshHardEdgeVertexCountScoreSettings, TEXT("vtx"));
+		AddRankedMeshes(TEXT("Nanite 静态网格顶点"), TEXT("StaticMesh Nanite Vertex Ranking"), TEXT("只统计启用 Nanite 的静态网格源顶点。"), StaticMeshes, [](const FMeshStat& Mesh){ return Mesh.bNanite ? Mesh.Vertices : 0; }, Settings.StaticMeshNaniteCountScoreSettings, TEXT("vtx"));
+		AddRankedMeshes(TEXT("Nanite 静态网格硬边顶点"), TEXT("StaticMesh Nanite Hard Edge Vertex Ranking"), TEXT("启用 Nanite 的静态网格硬边顶点。"), StaticMeshes, [](const FMeshStat& Mesh){ return Mesh.bNanite ? FMath::Max(0, Mesh.Vertices - Mesh.Triangles / 2) : 0; }, Settings.StaticMeshNaniteHardEdgeVertexCountScoreSettings, TEXT("vtx"));
+		AddRankedMeshes(TEXT("骨骼网格顶点数"), TEXT("SkeletalMesh Vertex Ranking"), TEXT("按顶点数检查目录中的骨骼网格。"), SkeletalMeshes, [](const FMeshStat& Mesh){ return Mesh.Vertices; }, Settings.SkeletalMeshCountScoreSettings, TEXT("vtx"));
+		AddRankedMeshes(TEXT("骨骼网格硬边顶点"), TEXT("SkeletalMesh Hard Edge Vertex Ranking"), TEXT("骨骼网格硬边顶点过多会增加蒙皮和绘制成本。"), SkeletalMeshes, [](const FMeshStat& Mesh){ return !Mesh.bNanite ? FMath::Max(0, Mesh.Vertices - Mesh.Triangles / 2) : 0; }, Settings.SkeletalMeshHardEdgeVertexCountScoreSettings, TEXT("vtx"));
+		AddRankedMeshes(TEXT("Nanite 骨骼网格顶点"), TEXT("SkeletalMesh Nanite Vertex Ranking"), TEXT("启用 Nanite 的骨骼网格顶点规模。"), SkeletalMeshes, [](const FMeshStat& Mesh){ return Mesh.bNanite ? Mesh.Vertices : 0; }, Settings.SkeletalMeshNaniteCountScoreSettings, TEXT("vtx"));
+		AddRankedMeshes(TEXT("Nanite 骨骼网格硬边顶点"), TEXT("SkeletalMesh Nanite Hard Edge Vertex Ranking"), TEXT("启用 Nanite 的骨骼网格硬边顶点。"), SkeletalMeshes, [](const FMeshStat& Mesh){ return Mesh.bNanite ? FMath::Max(0, Mesh.Vertices - Mesh.Triangles / 2) : 0; }, Settings.SkeletalMeshNaniteHardEdgeVertexCountScoreSettings, TEXT("vtx"));
+		AddRankedMeshes(TEXT("骨骼数量"), TEXT("Bone Count Ranking"), TEXT("骨骼越多，蒙皮、动画更新和内存占用越高。"), SkeletalMeshes, [](const FMeshStat& Mesh){ return Mesh.Bones; }, Settings.BoneCountScoreSettings, TEXT("n"));
+
+		if(Settings.NoLodsMeshCountScoreSettings.bAllowHealthCheck)
+		{
+			TArray<FCommonCheckerTableRow> Rows;
+			int32 Count = 0;
+			auto Append = [&](const TArray<FMeshStat>& Meshes)
+			{
+				for(const FMeshStat& Mesh : Meshes)
+				{
+					if(!Mesh.bNanite && Mesh.NumLODs <= 1)
+					{
+						++Count;
+						Rows.Add(MakeAssetRow(MeshLabel(Mesh.Path), Mesh.Vertices > 0 ? Mesh.Vertices : 1, TEXT("vtx"), Mesh.Path, EScore::F));
+					}
+				}
+			};
+			Append(StaticMeshes);
+			Append(SkeletalMeshes);
+			if(Count > 0)
+			{
+				const FScore SectionScore = GetScore(Count, Settings.NoLodsMeshCountScoreSettings);
+				Scores.Add(SectionScore);
+				AddFolderSection(View, TEXT("缺少 LOD"), TEXT("No LODs Meshes"), TEXT("非 Nanite 网格只有一个 LOD。远距离仍然绘制全精度模型。"), SectionScore.Score, FString::Printf(TEXT("缺少 LOD 的网格共 %d 个。"), Count), Rows);
+			}
+		}
+
+		if(Settings.TranslucentMaterialRatioScoreSettings.bAllowHealthCheck && Materials.Num() > 0)
+		{
+			int32 TranslucentCount = 0;
+			TArray<FCommonCheckerTableRow> Rows;
+			for(const FMaterialStat& Material : Materials)
+			{
+				EScore ItemScore = EScore::A;
+				if(Material.Blend == EMaterialBlendMode::Masked)
+				{
+					ItemScore = EScore::B;
+				}
+				else if(Material.Blend == EMaterialBlendMode::Translucent)
+				{
+					ItemScore = EScore::F;
+					++TranslucentCount;
+				}
+				else if(Material.Blend == EMaterialBlendMode::Unknown)
+				{
+					ItemScore = EScore::B;
+				}
+				Rows.Add(MakeAssetRow(MeshLabel(Material.Path), 1, GetMaterialBlendModeName(Material.Blend), Material.Path, ItemScore));
+			}
+			const float Ratio = SafeDivideToPercentage<float>(TranslucentCount, Materials.Num());
+			const FScore SectionScore = GetScore(Ratio, Settings.TranslucentMaterialRatioScoreSettings);
+			Scores.Add(SectionScore);
+			AddFolderSection(View, TEXT("材质分布"), TEXT("Material Distribution"), TEXT("按不透明、遮罩、半透明检查目录中的材质。半透明占比过高会增加过度绘制。"), SectionScore.Score, FString::Printf(TEXT("半透明 %d / %d = %.1f%%。"), TranslucentCount, Materials.Num(), Ratio), Rows);
+		}
+
+		auto AddTextures = [&](bool bStreaming, const TCHAR* Title, const TCHAR* English, const TCHAR* Explanation, const FIntScoreSettings& ScoreSettings, ETextureSize CompressedThreshold, ETextureSize UncompressedThreshold)
+		{
+			if(!ScoreSettings.bAllowHealthCheck)
+			{
+				return;
+			}
+			TArray<FCommonCheckerTableRow> Rows;
+			int32 OversizedCount = 0;
+			for(const FTextureStat& Texture : Textures)
+			{
+				if(Texture.bStreaming != bStreaming)
+				{
+					continue;
+				}
+				const ETextureSize Threshold = Texture.bCompressed ? CompressedThreshold : UncompressedThreshold;
+				const bool bOversized = (int32)Texture.Size <= (int32)Threshold;
+				if(bOversized)
+				{
+					++OversizedCount;
+				}
+				Rows.Add(MakeAssetRow(MeshLabel(Texture.Path), FMath::Max(Texture.SizeX, Texture.SizeY), GetTextureSizeName(Texture.Size), Texture.Path, bOversized ? EScore::F : EScore::A));
+			}
+			if(Rows.Num() == 0)
+			{
+				return;
+			}
+			const FScore SectionScore = GetScore(OversizedCount, ScoreSettings);
+			Scores.Add(SectionScore);
+			AddFolderSection(View, Title, English, Explanation, SectionScore.Score, FString::Printf(TEXT("共 %d 张，超过阈值 %d 张。"), Rows.Num(), OversizedCount), Rows);
+		};
+
+		AddTextures(true, TEXT("流送贴图"), TEXT("Streaming Texture"), TEXT("目录中会流送的贴图。过大的流送贴图会增加纹理池压力。"), Settings.StreamingTextureCountScoreSettings, Settings.StreamingCompressedTextureSizeThreshold, Settings.StreamingUncompressedTextureSizeThreshold);
+		AddTextures(false, TEXT("非流送贴图"), TEXT("Non Streaming Texture"), TEXT("目录中不参与流送的贴图。这类贴图过大会拖慢加载。"), Settings.NonStreamingTextureCountScoreSettings, Settings.NonStreamingCompressedTextureSizeThreshold, Settings.NonStreamingUncompressedTextureSizeThreshold);
+
+		float TotalScore = 0.f;
+		float TotalWeight = 0.f;
+		for(const FScore& Score : Scores)
+		{
+			if(!Score.bAllowHealthCheck || Score.ScoreWeight <= 0.f)
+			{
+				continue;
+			}
+			TotalScore += (float)Score.Score * Score.ScoreWeight;
+			TotalWeight += Score.ScoreWeight;
+		}
+		const EScore OverallScore = TotalWeight > 0.f
+			? (EScore)FMath::Clamp(FMath::RoundToInt(TotalScore / TotalWeight), 0, (int32)EScore::MAX - 1)
+			: EScore::A;
+		View.OverallScore = GetScoreString(OverallScore);
+		View.OverallDescription = View.Sections.Num() > 0
+			? FString::Printf(TEXT("内容目录检查完成，综合结果 %s。这次只统计选中目录里的网格、材质和贴图，不包含当前关卡中的 Actor。"), *View.OverallScore)
+			: FString(TEXT("这个目录里没有可检查的网格、材质或贴图。"));
+
+		CommonCheckerReport::SetLast(MoveTemp(View));
+		Progress.EnterProgressFrame(20.f);
+		UE_CLOG(bSkipAutoOpenReport, LogCommonChecker, Log, TEXT("Content folder check updated for the Slate window."));
+		return true;
+	}
+}
+
 void UCommonCheckerEditorSubsystem::OpenCommonCheckerSettings()
 {
 	HC4UE::ShowCommonCheckerSettings();
@@ -2294,14 +2671,20 @@ bool UCommonCheckerEditorSubsystem::RunCommonChecker(bool bSkipAutoOpenReport)
 	return RunCommonCheckerForFolders(TArray<FString>(), bSkipAutoOpenReport);
 }
 
-bool UCommonCheckerEditorSubsystem::RunCommonCheckerForFolders(const TArray<FString>& FolderPaths, bool bSkipAutoOpenReport)
+bool UCommonCheckerEditorSubsystem::RunCommonCheckerForFolders(const TArray<FString>& FolderPaths, bool bSkipAutoOpenReport, ECommonCheckerScope Scope)
 {
+	if(Scope == ECommonCheckerScope::ContentFolder)
+	{
+		return RunContentFolderCheck(FolderPaths, bSkipAutoOpenReport);
+	}
+
 	using namespace HC4UE;
 
 	const UCommonCheckerSettings& Settings = *GetCommonCheckerSettings();
 
 	FCommonCheckerContext Context;
-	Context.FolderPaths = FolderPaths;
+	// 当前关卡模式不使用内容目录，避免把文件夹里的资产和关卡 Actor 算进同一次结果。
+	Context.FolderPaths.Reset();
 
 	FCommonCheckerMessageLog MessageLog;
 	MessageLog.Initialize();
@@ -7018,6 +7401,7 @@ auto RunImpl = [&]()->bool
 			{
 				GraphName = MoveTemp(KeyString);
 			}
+			const FString LookupKey = GraphName;
 
 			FText LocText;
 #if HC4UE_UE5_5
@@ -7038,8 +7422,125 @@ auto RunImpl = [&]()->bool
 				GraphName += TEXT(" (") + CategoryString;
 			}
 
+			FString EnglishTitle = GraphName;
+			FString ChineseTitle = GraphName;
+			FString Explanation;
+			{
+				struct FSectionCopy
+				{
+					const TCHAR* Key;
+					const TCHAR* Chinese;
+					const TCHAR* English;
+					const TCHAR* Detail;
+				};
+				static const FSectionCopy Copies[] =
+				{
+					{ TEXT("Level_Distribution"), TEXT("关卡分布"), TEXT("Level Distribution"), TEXT("统计当前关卡中常驻关卡与流送关卡的数量。关卡过多会提高加载、流送和版本管理成本。") },
+					{ TEXT("Map_Load_Time"), TEXT("地图加载时间"), TEXT("Map Load Time"), TEXT("逐个加载子关卡或 World Partition 单元，记录可见所需时间。加载越慢，进入场景和切换区域越容易卡顿。") },
+					{ TEXT("Actor_Category_Distribution"), TEXT("Actor 分类分布"), TEXT("Actor Category Distribution"), TEXT("按静态网格、骨骼网格、粒子、灯光等类别统计 Actor 数量，用来看场景构成是否失衡。") },
+					{ TEXT("Child_Component_Max"), TEXT("子组件最大数量"), TEXT("Child Component Max"), TEXT("找出单个 Actor 上挂载组件最多的情况。组件过多会增加 Tick、渲染和序列化开销。") },
+					{ TEXT("Child_Component_Average"), TEXT("子组件平均数量"), TEXT("Child Component Average"), TEXT("统计每个 Actor 平均持有的组件数。平均值偏高通常说明蓝图或预制体拆分过细。") },
+					{ TEXT("Actor_Tick_Count"), TEXT("Actor Tick 占比"), TEXT("Actor Tick Count"), TEXT("统计仍在 Tick 的 Actor 占全部 Actor 的比例。不需要每帧更新的对象应关闭 Tick。") },
+					{ TEXT("Blueprint_Ratio"), TEXT("蓝图占比"), TEXT("Blueprint Ratio"), TEXT("统计蓝图 Actor 占全部 Actor 的比例。大量蓝图实例会增加加载和运行时开销。") },
+					{ TEXT("StaticMeshActor_Same_Mesh_Count"), TEXT("相同静态网格 Actor"), TEXT("StaticMeshActor Same Mesh Count"), TEXT("找出重复摆放同一静态网格的 StaticMeshActor。数量很多时更适合实例化或合并。") },
+					{ TEXT("Needs_AttachParentBounds"), TEXT("需要父级包围盒"), TEXT("Needs AttachParentBounds"), TEXT("标记包围盒明显大于父组件、应使用 AttachParentBounds 的组件，避免错误的剔除范围。") },
+					{ TEXT("Needs_AutoManageAttachment"), TEXT("需要自动附着管理"), TEXT("Needs AutoManageAttachment"), TEXT("音频或粒子组件未正确自动管理附着时，可能在不可见时仍然播放或占用资源。") },
+					{ TEXT("Needs_Multiple_AudioPlayMode"), TEXT("音频播放模式"), TEXT("Needs Multiple AudioPlayMode"), TEXT("检查需要改为多次播放模式的音频组件，避免同一声音被错误地单次播放或叠加。") },
+					{ TEXT("Same_Materials_In_Material_Slots"), TEXT("材质槽重复"), TEXT("Same Materials In Material Slots"), TEXT("同一个网格的多个材质槽引用了同一材质。重复槽会增加绘制批次，应合并槽位。") },
+					{ TEXT("Mismatch_OverrideMaterial_Count"), TEXT("覆盖材质数量不匹配"), TEXT("Mismatch Override Material Count"), TEXT("组件上的覆盖材质数量和网格原有材质槽数量不一致，可能导致槽位错位或空材质。") },
+					{ TEXT("Missing_Components_Material"), TEXT("缺失材质"), TEXT("Missing Components Material"), TEXT("网格或组件没有分配材质。缺材质会显示默认网格，也可能带来额外着色开销。") },
+					{ TEXT("Missing_Components_Mesh"), TEXT("缺失网格"), TEXT("Missing Components Mesh"), TEXT("组件没有分配网格资源。空网格仍然占用 Actor，但不会贡献有效几何。") },
+					{ TEXT("No_LODs_Meshes"), TEXT("缺少 LOD"), TEXT("No LODs Meshes"), TEXT("非 Nanite 网格只有一个 LOD。远距离仍然绘制全精度模型，会增加顶点和像素开销。") },
+					{ TEXT("Missing_Actors_Component"), TEXT("缺少组件的 Actor"), TEXT("Missing Actors Component"), TEXT("Actor 上没有有效组件。这类对象通常是残留摆放，应清理。") },
+					{ TEXT("StaticMesh_Vertex_Ranking"), TEXT("静态网格顶点数"), TEXT("StaticMesh Vertex Ranking"), TEXT("按 LOD0 顶点数排列静态网格。顶点过多会增加加载时间和 GPU 顶点处理。") },
+					{ TEXT("StaticMesh_Hard_Edge_Vertex_Ranking"), TEXT("静态网格硬边顶点"), TEXT("StaticMesh Hard Edge Vertex Ranking"), TEXT("硬边会拆开共享顶点。硬边顶点过多会降低顶点缓存命中，拖慢 GPU。") },
+					{ TEXT("StaticMesh_Nanite_Vertex_Ranking"), TEXT("Nanite 静态网格顶点"), TEXT("StaticMesh Nanite Vertex Ranking"), TEXT("统计启用 Nanite 的静态网格源顶点规模。源数据过大仍会增加内存和构建成本。") },
+					{ TEXT("StaticMesh_Nanite_Hard_Edge_Vertex_Ranking"), TEXT("Nanite 静态网格硬边顶点"), TEXT("StaticMesh Nanite Hard Edge Vertex Ranking"), TEXT("Nanite 网格上的硬边顶点。过多硬边会增加簇数据和运行时开销。") },
+					{ TEXT("SkeletalMesh_Vertex_Ranking"), TEXT("骨骼网格顶点数"), TEXT("SkeletalMesh Vertex Ranking"), TEXT("按顶点数排列骨骼网格。角色或附件顶点过多会影响蒙皮和加载。") },
+					{ TEXT("SkeletalMesh_Hard_Edge_Vertex_Ranking"), TEXT("骨骼网格硬边顶点"), TEXT("SkeletalMesh Hard Edge Vertex Ranking"), TEXT("骨骼网格硬边顶点过多会降低顶点复用，增加蒙皮和绘制成本。") },
+					{ TEXT("SkeletalMesh_Nanite_Vertex_Ranking"), TEXT("Nanite 骨骼网格顶点"), TEXT("SkeletalMesh Nanite Vertex Ranking"), TEXT("启用 Nanite 的骨骼网格顶点规模。需要确认平台和动画需求是否适合 Nanite。") },
+					{ TEXT("SkeletalMesh_Nanite_Hard_Edge_Vertex_Ranking"), TEXT("Nanite 骨骼网格硬边顶点"), TEXT("SkeletalMesh Nanite Hard Edge Vertex Ranking"), TEXT("Nanite 骨骼网格的硬边顶点。硬边越多，簇划分和内存占用越高。") },
+					{ TEXT("ParticleMesh_Vertex_Ranking"), TEXT("粒子网格顶点"), TEXT("ParticleMesh Vertex Ranking"), TEXT("粒子使用的网格顶点数。粒子网格应尽量低模，否则发射数量上来后 GPU 开销会很快变高。") },
+					{ TEXT("ParticleMesh_Hard_Edge_Vertex_Ranking"), TEXT("粒子网格硬边顶点"), TEXT("ParticleMesh Hard Edge Vertex Ranking"), TEXT("粒子网格上的硬边顶点。粒子通常不需要高精度硬边。") },
+					{ TEXT("ParticleMesh_Nanite_Vertex_Ranking"), TEXT("粒子 Nanite 网格顶点"), TEXT("ParticleMesh Nanite Vertex Ranking"), TEXT("粒子引用了 Nanite 网格。粒子通常不适合直接使用高顶点 Nanite 资源。") },
+					{ TEXT("ParticleMesh_Nanite_Hard_Edge_Vertex_Ranking"), TEXT("粒子 Nanite 网格硬边顶点"), TEXT("ParticleMesh Nanite Hard Edge Vertex Ranking"), TEXT("粒子所用 Nanite 网格的硬边规模。数值高说明这个粒子网格过重。") },
+					{ TEXT("Bone_Count_Ranking"), TEXT("骨骼数量"), TEXT("Bone Count Ranking"), TEXT("统计骨骼网格的骨骼数。骨骼越多，蒙皮、动画更新和内存占用越高。") },
+					{ TEXT("LOD_Bone_Reduction"), TEXT("LOD 骨骼精简"), TEXT("LOD Bone Reduction"), TEXT("比较最低 LOD 相对原始骨骼的保留比例。远景 LOD 若几乎不减骨，动画成本下不来。") },
+					{ TEXT("Niagara_Stateless_Emitter"), TEXT("Niagara 状态发射器"), TEXT("Niagara Stateless Emitter"), TEXT("统计有状态发射器占比。有状态发射器更重，能改成无状态时应优先改。") },
+					{ TEXT("Niagara_Emitter_Optimization_Hints"), TEXT("Niagara 发射器优化"), TEXT("Niagara Emitter Optimization Hints"), TEXT("标出仍有优化空间的 Niagara 发射器，例如渲染器过多、预热时间过长。") },
+					{ TEXT("Niagara_System_Optimization_Hints"), TEXT("Niagara 系统优化"), TEXT("Niagara System Optimization Hints"), TEXT("标出系统级别的 Niagara 问题，例如空发射器、过多渲染器或过长的 Warmup。") },
+					{ TEXT("Material_Distribution"), TEXT("材质分布"), TEXT("Material Distribution"), TEXT("按不透明、遮罩、半透明统计材质数量。半透明占比过高会增加过度绘制和 GPU 压力。列表中标红的是导致超标的半透明项。") },
+					{ TEXT("Dynamic_Shadow_Ratio"), TEXT("动态阴影占比"), TEXT("Dynamic Shadow Ratio"), TEXT("统计投射动态阴影的组件比例。不需要动态阴影的物体应关闭，以减少阴影贴图开销。") },
+					{ TEXT("Movable_Light_Dynamic_Shadow_Ratio"), TEXT("可移动光动态阴影"), TEXT("Movable Light Dynamic Shadow"), TEXT("统计可移动灯光投射动态阴影的数量。可移动光的动态阴影是最贵的阴影类型之一。") },
+					{ TEXT("Scene_Light_Distribution"), TEXT("场景光分布"), TEXT("Scene Light Distribution"), TEXT("统计场景中可移动灯光的数量。可移动光过多会提高光照和阴影成本。") },
+					{ TEXT("Overlap_Distribution"), TEXT("重叠检测分布"), TEXT("Overlap Distribution"), TEXT("统计开启重叠事件的组件。重叠回调过多会增加物理和游戏线程开销。") },
+					{ TEXT("NavMesh_Ratio"), TEXT("导航网格占比"), TEXT("NavMesh Ratio"), TEXT("统计参与导航网格的组件比例，用来判断导航生成范围是否过大。") },
+					{ TEXT("Error_NavMesh_Polygons"), TEXT("导航网格异常多边形"), TEXT("Error NavMesh Polygons"), TEXT("找出埋入几何或生成异常的导航多边形。这些区域会导致寻路错误。") },
+					{ TEXT("Error_Brush_Polygons"), TEXT("笔刷异常多边形"), TEXT("Error Brush Polygons"), TEXT("找出有破洞或异常的笔刷体。破面会影响碰撞、体积和光照。") },
+					{ TEXT("PostProcess_PixelShader_Instructions"), TEXT("后处理指令数"), TEXT("PostProcess PixelShader Instructions"), TEXT("统计后处理材质的像素着色器指令数。指令过多会直接拉低整屏填充性能。") },
+					{ TEXT("Streaming_Texture"), TEXT("流送贴图"), TEXT("Streaming Texture"), TEXT("按尺寸统计会流送的贴图。过大的流送贴图会增加纹理池压力和等待时间。") },
+					{ TEXT("Non_Streaming_Texture"), TEXT("非流送贴图"), TEXT("Non Streaming Texture"), TEXT("按尺寸统计不参与流送、启动时就加载的贴图。这类贴图过大会拖慢初始加载。") },
+					{ TEXT("Streamed_In_Texture"), TEXT("已载入贴图"), TEXT("Streamed In Texture"), TEXT("统计当前已经流送进内存的贴图尺寸分布，用来观察实际占用。") },
+				};
+				for(const FSectionCopy& Copy : Copies)
+				{
+					if(LookupKey.Equals(Copy.Key))
+					{
+						ChineseTitle = Copy.Chinese;
+						EnglishTitle = Copy.English;
+						Explanation = Copy.Detail;
+						break;
+					}
+				}
+			}
+
+			if(!CategoryString.IsEmpty())
+			{
+				FString Category = CategoryString;
+				Category.RemoveFromEnd(TEXT(")"));
+				const bool bCompressed = Category.Equals(TEXT("DXT/BC"));
+				const bool bUncompressed = Category.Equals(TEXT("RGB/RGBA"));
+				ETextureSize SizeThreshold = ETextureSize::MAX;
+				if(bCompressed || bUncompressed)
+				{
+					const bool bNonStreaming = LookupKey.Equals(TEXT("Non_Streaming_Texture"));
+					if(bNonStreaming)
+					{
+						SizeThreshold = bCompressed ? Settings.NonStreamingCompressedTextureSizeThreshold : Settings.NonStreamingUncompressedTextureSizeThreshold;
+					}
+					else
+					{
+						SizeThreshold = bCompressed ? Settings.StreamingCompressedTextureSizeThreshold : Settings.StreamingUncompressedTextureSizeThreshold;
+					}
+				}
+
+				const FString SizeName = SizeThreshold != ETextureSize::MAX ? GetTextureSizeName(SizeThreshold) : FString();
+				FString ChineseSuffix = Category;
+				FString EnglishSuffix = Category;
+				if(bCompressed)
+				{
+					ChineseSuffix = SizeName.IsEmpty() ? TEXT("压缩") : FString::Printf(TEXT("%s 压缩"), *SizeName);
+					EnglishSuffix = SizeName.IsEmpty() ? TEXT("Compressed") : FString::Printf(TEXT("%s Compressed"), *SizeName);
+					Explanation += SizeName.IsEmpty()
+						? FString(TEXT(" 这一项只统计压缩格式（DXT/BC）。"))
+						: FString::Printf(TEXT(" 这一项按 %s 阈值统计压缩贴图（DXT/BC）。"), *SizeName);
+				}
+				else if(bUncompressed)
+				{
+					ChineseSuffix = SizeName.IsEmpty() ? TEXT("未压缩") : FString::Printf(TEXT("%s 未压缩"), *SizeName);
+					EnglishSuffix = SizeName.IsEmpty() ? TEXT("Uncompressed") : FString::Printf(TEXT("%s Uncompressed"), *SizeName);
+					Explanation += SizeName.IsEmpty()
+						? FString(TEXT(" 这一项只统计未压缩格式（RGB/RGBA）。"))
+						: FString::Printf(TEXT(" 这一项按 %s 阈值统计未压缩贴图（RGB/RGBA）。"), *SizeName);
+				}
+				ChineseTitle += FString::Printf(TEXT("（%s）"), *ChineseSuffix);
+				EnglishTitle += FString::Printf(TEXT(" (%s)"), *EnglishSuffix);
+			}
+
 			FCommonCheckerTableSection& Section = View.Sections.AddDefaulted_GetRef();
-			Section.Title = GraphName;
+			Section.Title = ChineseTitle;
+			Section.EnglishTitle = EnglishTitle;
+			Section.Explanation = Explanation;
 			Section.Score = GetScoreString(Report.Value.Score.Score);
 
 			FString Description = Report.Value.Description.ToString();
@@ -7083,7 +7584,7 @@ auto RunImpl = [&]()->bool
 	if(bCheckResult)
 	{
 		CommonCheckerReport::SetLast(BuildReportView());
-		UE_CLOG(bSkipAutoOpenReport, LogCommonChecker, Log, TEXT("Health Checker report updated for the Slate window."));
+		UE_CLOG(bSkipAutoOpenReport, LogCommonChecker, Log, TEXT("Common Checker report updated for the Slate window."));
 	}
 
 	GAssetRegistry = nullptr;

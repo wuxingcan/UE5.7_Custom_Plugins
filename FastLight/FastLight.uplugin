@@ -1,0 +1,24 @@
+﻿{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "FastLight",
+	"Description": "选中灯光后显示可拖拽的瞄准箭头。把箭头拖到道具或角色上，即可看到灯光方向和表面交点。",
+	"Category": "Lighting",
+	"CreatedBy": "wuxingcan",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"EngineVersion": "5.7.0",
+	"Modules": [
+		{
+			"Name": "FastLight",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
+		}
+	]
+}

@@ -15,9 +15,10 @@
 #include "UObject/ScriptMacros.h"
 
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
+enum class ECommonCheckerScope : uint8;
 
 // ********** Begin Class UCommonCheckerEditorSubsystem ********************************************
-#define FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerEditorSubsystem_h_14_RPC_WRAPPERS_NO_PURE_DECLS \
+#define FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerEditorSubsystem_h_21_RPC_WRAPPERS_NO_PURE_DECLS \
 	DECLARE_FUNCTION(execRunCommonCheckerForFolders); \
 	DECLARE_FUNCTION(execRunCommonChecker); \
 	DECLARE_FUNCTION(execOpenCommonCheckerSettings);
@@ -26,7 +27,7 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 struct Z_Construct_UClass_UCommonCheckerEditorSubsystem_Statics;
 COMMONCHECKER_API UClass* Z_Construct_UClass_UCommonCheckerEditorSubsystem_NoRegister();
 
-#define FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerEditorSubsystem_h_14_INCLASS_NO_PURE_DECLS \
+#define FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerEditorSubsystem_h_21_INCLASS_NO_PURE_DECLS \
 private: \
 	static void StaticRegisterNativesUCommonCheckerEditorSubsystem(); \
 	friend struct ::Z_Construct_UClass_UCommonCheckerEditorSubsystem_Statics; \
@@ -37,7 +38,7 @@ public: \
 	DECLARE_SERIALIZER(UCommonCheckerEditorSubsystem)
 
 
-#define FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerEditorSubsystem_h_14_ENHANCED_CONSTRUCTORS \
+#define FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerEditorSubsystem_h_21_ENHANCED_CONSTRUCTORS \
 	/** Standard constructor, called after all reflected properties have been initialized */ \
 	NO_API UCommonCheckerEditorSubsystem(); \
 	/** Deleted move- and copy-constructors, should never be used */ \
@@ -49,13 +50,13 @@ public: \
 	NO_API virtual ~UCommonCheckerEditorSubsystem();
 
 
-#define FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerEditorSubsystem_h_11_PROLOG
-#define FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerEditorSubsystem_h_14_GENERATED_BODY \
+#define FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerEditorSubsystem_h_18_PROLOG
+#define FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerEditorSubsystem_h_21_GENERATED_BODY \
 PRAGMA_DISABLE_DEPRECATION_WARNINGS \
 public: \
-	FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerEditorSubsystem_h_14_RPC_WRAPPERS_NO_PURE_DECLS \
-	FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerEditorSubsystem_h_14_INCLASS_NO_PURE_DECLS \
-	FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerEditorSubsystem_h_14_ENHANCED_CONSTRUCTORS \
+	FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerEditorSubsystem_h_21_RPC_WRAPPERS_NO_PURE_DECLS \
+	FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerEditorSubsystem_h_21_INCLASS_NO_PURE_DECLS \
+	FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerEditorSubsystem_h_21_ENHANCED_CONSTRUCTORS \
 private: \
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
@@ -66,5 +67,15 @@ class UCommonCheckerEditorSubsystem;
 
 #undef CURRENT_FILE_ID
 #define CURRENT_FILE_ID FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerEditorSubsystem_h
+
+// ********** Begin Enum ECommonCheckerScope *******************************************************
+#define FOREACH_ENUM_ECOMMONCHECKERSCOPE(op) \
+	op(ECommonCheckerScope::CurrentLevel) \
+	op(ECommonCheckerScope::ContentFolder) 
+
+enum class ECommonCheckerScope : uint8;
+template<> struct TIsUEnumClass<ECommonCheckerScope> { enum { Value = true }; };
+template<> COMMONCHECKER_NON_ATTRIBUTED_API UEnum* StaticEnum<ECommonCheckerScope>();
+// ********** End Enum ECommonCheckerScope *********************************************************
 
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

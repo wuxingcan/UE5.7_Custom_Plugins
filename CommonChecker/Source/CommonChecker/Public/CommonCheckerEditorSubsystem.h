@@ -8,6 +8,13 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogCommonChecker, Log, All);
 
+UENUM(BlueprintType)
+enum class ECommonCheckerScope : uint8
+{
+	CurrentLevel UMETA(DisplayName = "当前关卡"),
+	ContentFolder UMETA(DisplayName = "内容目录")
+};
+
 UCLASS()
 class UCommonCheckerEditorSubsystem : public UEditorSubsystem
 {
@@ -22,5 +29,5 @@ public:
 	static bool RunCommonChecker(bool bSkipAutoOpenReport = false);
 
 	UFUNCTION(BlueprintCallable, Category="Editor")
-	static bool RunCommonCheckerForFolders(const TArray<FString>& FolderPaths, bool bSkipAutoOpenReport = false);
+	static bool RunCommonCheckerForFolders(const TArray<FString>& FolderPaths, bool bSkipAutoOpenReport = false, ECommonCheckerScope Scope = ECommonCheckerScope::CurrentLevel);
 };
