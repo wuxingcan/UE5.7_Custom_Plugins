@@ -1,0 +1,15 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "d:\\workspace\\code\\cpp\\ue\\5.5\\custonplugins\\plugins\\commonefx\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\commonefx\\module.commonefx.cpp",
+        "ProvidedModule": "",
+        "PCH": "d:\\workspace\\code\\cpp\\ue\\5.5\\custonplugins\\intermediate\\build\\win64\\x64\\custonpluginseditor\\development\\unrealed\\sharedpch.unrealed.project.valapi.cpp20.h.pch",
+        "Includes": [
+            "d:\\workspace\\code\\cpp\\ue\\5.5\\custonplugins\\plugins\\commonefx\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\commonefx\\definitions.commonefx.h",
+            "d:\\workspace\\code\\cpp\\ue\\5.5\\custonplugins\\plugins\\commonefx\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\commonefx\\permoduleinline.gen.cpp",
+            "d:\\program files\\epic games\\ue_5.5\\engine\\source\\runtime\\core\\public\\hal\\permoduleinline.inl"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

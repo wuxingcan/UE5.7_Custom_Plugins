@@ -330,19 +330,6 @@ UActorComponent* FFastLightAimVisualizer::GetEditedComponent() const
 	return nullptr;
 }
 
-bool FFastLightAimVisualizer::ShouldAutoSelectElementOnHandleClick() const
-{
-	if(bEditingAim)
-	{
-		return false;
-	}
-	if(bForwardingToInner && Inner.IsValid())
-	{
-		return Inner->ShouldAutoSelectElementOnHandleClick();
-	}
-	return FComponentVisualizer::ShouldAutoSelectElementOnHandleClick();
-}
-
 void FFastLightInputProcessor::Tick(const float DeltaTime, FSlateApplication& SlateApp, TSharedRef<ICursor> Cursor)
 {
 }

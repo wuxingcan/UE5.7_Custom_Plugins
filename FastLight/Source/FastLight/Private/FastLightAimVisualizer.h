@@ -29,7 +29,6 @@ public:
 	virtual void TrackingStopped(FEditorViewportClient* InViewportClient, bool bInDidMove) override;
 	virtual void EndEditing() override;
 	virtual UActorComponent* GetEditedComponent() const override;
-	virtual bool ShouldAutoSelectElementOnHandleClick() const override;
 
 	virtual ~FFastLightAimVisualizer() override;
 	static bool IsOurVisualizer(const FComponentVisualizer* Visualizer);

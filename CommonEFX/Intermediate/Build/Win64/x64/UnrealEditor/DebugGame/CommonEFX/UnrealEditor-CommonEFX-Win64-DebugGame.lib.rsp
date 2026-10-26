@@ -1,0 +1,14 @@
+/NOLOGO
+/errorReport:prompt
+/MACHINE:x64
+/SUBSYSTEM:WINDOWS
+/DEF
+/NAME:"UnrealEditor-CommonEFX-Win64-DebugGame.dll"
+/IGNORE:4221
+/NODEFAULTLIB
+"D:\workspace\code\cpp\ue\5.5\CustonPlugins\Intermediate\Build\Win64\x64\CustonPluginsEditor\DebugGame\UnrealEd\SharedPCH.UnrealEd.Project.NonOptimized.ValApi.Cpp20.h.obj"
+"D:\workspace\code\cpp\ue\5.5\CustonPlugins\Plugins\CommonEFX\Intermediate\Build\Win64\x64\UnrealEditor\DebugGame\CommonEFX\Module.CommonEFX.cpp.obj"
+"D:\workspace\code\cpp\ue\5.5\CustonPlugins\Plugins\CommonEFX\Intermediate\Build\Win64\x64\UnrealEditor\DebugGame\CommonEFX\CommonEFX.cpp.obj"
+"D:\workspace\code\cpp\ue\5.5\CustonPlugins\Plugins\CommonEFX\Intermediate\Build\Win64\x64\UnrealEditor\DebugGame\CommonEFX\CommonEFXExporter.cpp.obj"
+"D:\workspace\code\cpp\ue\5.5\CustonPlugins\Plugins\CommonEFX\Intermediate\Build\Win64\x64\UnrealEditor\DebugGame\CommonEFX\Default.rc2.res"
+/OUT:"D:\workspace\code\cpp\ue\5.5\CustonPlugins\Plugins\CommonEFX\Intermediate\Build\Win64\x64\UnrealEditor\DebugGame\CommonEFX\UnrealEditor-CommonEFX-Win64-DebugGame.lib"

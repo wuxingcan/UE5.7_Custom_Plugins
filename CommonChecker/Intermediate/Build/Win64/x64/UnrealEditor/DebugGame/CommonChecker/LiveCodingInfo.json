@@ -1,0 +1,17 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.CommonChecker.cpp.obj": [
+			"CommonChecker.init.gen.cpp.obj",
+			"CommonCheckerEditorSubsystem.gen.cpp.obj",
+			"CommonCheckerTypes.gen.cpp.obj",
+			"PerModuleInline.gen.cpp.obj",
+			"CommonChecker.cpp.obj",
+			"CommonCheckerEditorSubsystem.cpp.obj",
+			"CommonCheckerScoreSettingsCustomization.cpp.obj",
+			"CommonCheckerSettings.cpp.obj",
+			"CommonCheckerStyle.cpp.obj",
+			"SCommonCheckerPanel.cpp.obj"
+		]
+	}
+}

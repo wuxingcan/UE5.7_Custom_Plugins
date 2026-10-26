@@ -1,18 +1,18 @@
 {
     "Version": "1.2",
     "Data": {
-        "Source": "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\commonchecker\\source\\commonchecker\\private\\commoncheckerscoresettingscustomization.cpp",
+        "Source": "d:\\workspace\\code\\cpp\\ue\\5.5\\custonplugins\\plugins\\commonchecker\\source\\commonchecker\\private\\commoncheckerscoresettingscustomization.cpp",
         "ProvidedModule": "",
-        "PCH": "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\intermediate\\build\\win64\\x64\\custonpluginseditor\\development\\unrealed\\sharedpch.unrealed.project.valapi.valexpapi.cpp20.h.pch",
+        "PCH": "d:\\workspace\\code\\cpp\\ue\\5.5\\custonplugins\\intermediate\\build\\win64\\x64\\custonpluginseditor\\development\\unrealed\\sharedpch.unrealed.project.valapi.cpp20.h.pch",
         "Includes": [
-            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\commonchecker\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\commonchecker\\definitions.commonchecker.h",
-            "d:\\workspace\\code\\cpp\\ue\\5.7\\custonplugins\\plugins\\commonchecker\\source\\commonchecker\\public\\commoncheckerscoresettingscustomization.h",
-            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\editor\\propertyeditor\\public\\detailwidgetrow.h",
-            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\editor\\propertyeditor\\public\\idetailpropertyrow.h",
-            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\editor\\propertyeditor\\public\\detailcategorybuilder.h",
-            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\editor\\propertyeditor\\public\\idetailcustomnodebuilder.h",
-            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\editor\\propertyeditor\\public\\detailbuildertypes.h",
-            "d:\\program files\\epic games\\ue_5.7\\engine\\source\\editor\\propertyeditor\\public\\propertyeditorcopypaste.h"
+            "d:\\workspace\\code\\cpp\\ue\\5.5\\custonplugins\\plugins\\commonchecker\\intermediate\\build\\win64\\x64\\unrealeditor\\development\\commonchecker\\definitions.commonchecker.h",
+            "d:\\workspace\\code\\cpp\\ue\\5.5\\custonplugins\\plugins\\commonchecker\\source\\commonchecker\\public\\commoncheckerscoresettingscustomization.h",
+            "d:\\program files\\epic games\\ue_5.5\\engine\\source\\editor\\propertyeditor\\public\\detailwidgetrow.h",
+            "d:\\program files\\epic games\\ue_5.5\\engine\\source\\editor\\propertyeditor\\public\\idetailpropertyrow.h",
+            "d:\\program files\\epic games\\ue_5.5\\engine\\source\\editor\\propertyeditor\\public\\detailcategorybuilder.h",
+            "d:\\program files\\epic games\\ue_5.5\\engine\\source\\editor\\propertyeditor\\public\\idetailcustomnodebuilder.h",
+            "d:\\program files\\epic games\\ue_5.5\\engine\\source\\editor\\propertyeditor\\public\\detailbuildertypes.h",
+            "d:\\program files\\epic games\\ue_5.5\\engine\\source\\editor\\propertyeditor\\public\\propertyeditorcopypaste.h"
         ],
         "ImportedModules": [],
         "ImportedHeaderUnits": []

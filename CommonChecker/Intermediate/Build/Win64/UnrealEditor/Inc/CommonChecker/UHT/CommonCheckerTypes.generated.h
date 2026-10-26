@@ -5,41 +5,33 @@
 ===========================================================================*/
 
 // IWYU pragma: private, include "CommonCheckerTypes.h"
+#include "UObject/ObjectMacros.h"
+#include "UObject/ScriptMacros.h"
 
+PRAGMA_DISABLE_DEPRECATION_WARNINGS
 #ifdef COMMONCHECKER_CommonCheckerTypes_generated_h
 #error "CommonCheckerTypes.generated.h already included, missing '#pragma once' in CommonCheckerTypes.h"
 #endif
 #define COMMONCHECKER_CommonCheckerTypes_generated_h
 
-#include "UObject/ObjectMacros.h"
-#include "UObject/ScriptMacros.h"
-
-PRAGMA_DISABLE_DEPRECATION_WARNINGS
-
-// ********** Begin ScriptStruct FIntScoreSettings *************************************************
-struct Z_Construct_UScriptStruct_FIntScoreSettings_Statics;
-#define FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerTypes_h_49_GENERATED_BODY \
-	friend struct ::Z_Construct_UScriptStruct_FIntScoreSettings_Statics; \
+#define FID_workspace_code_cpp_ue_5_5_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerTypes_h_49_GENERATED_BODY \
+	friend struct Z_Construct_UScriptStruct_FIntScoreSettings_Statics; \
 	COMMONCHECKER_API static class UScriptStruct* StaticStruct();
 
 
-struct FIntScoreSettings;
-// ********** End ScriptStruct FIntScoreSettings ***************************************************
+template<> COMMONCHECKER_API UScriptStruct* StaticStruct<struct FIntScoreSettings>();
 
-// ********** Begin ScriptStruct FFloatScoreSettings ***********************************************
-struct Z_Construct_UScriptStruct_FFloatScoreSettings_Statics;
-#define FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerTypes_h_87_GENERATED_BODY \
-	friend struct ::Z_Construct_UScriptStruct_FFloatScoreSettings_Statics; \
+#define FID_workspace_code_cpp_ue_5_5_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerTypes_h_87_GENERATED_BODY \
+	friend struct Z_Construct_UScriptStruct_FFloatScoreSettings_Statics; \
 	COMMONCHECKER_API static class UScriptStruct* StaticStruct();
 
 
-struct FFloatScoreSettings;
-// ********** End ScriptStruct FFloatScoreSettings *************************************************
+template<> COMMONCHECKER_API UScriptStruct* StaticStruct<struct FFloatScoreSettings>();
 
 #undef CURRENT_FILE_ID
-#define CURRENT_FILE_ID FID_workspace_code_cpp_ue_5_7_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerTypes_h
+#define CURRENT_FILE_ID FID_workspace_code_cpp_ue_5_5_CustonPlugins_Plugins_CommonChecker_Source_CommonChecker_Public_CommonCheckerTypes_h
 
-// ********** Begin Enum EBitActorCategory *********************************************************
+
 #define FOREACH_ENUM_EBITACTORCATEGORY(op) \
 	op(EBitActorCategory::SkeletalMesh) \
 	op(EBitActorCategory::StaticMesh) \
@@ -53,10 +45,8 @@ struct FFloatScoreSettings;
 
 enum class EBitActorCategory : int32;
 template<> struct TIsUEnumClass<EBitActorCategory> { enum { Value = true }; };
-template<> COMMONCHECKER_NON_ATTRIBUTED_API UEnum* StaticEnum<EBitActorCategory>();
-// ********** End Enum EBitActorCategory ***********************************************************
+template<> COMMONCHECKER_API UEnum* StaticEnum<EBitActorCategory>();
 
-// ********** Begin Enum ETextureSize **************************************************************
 #define FOREACH_ENUM_ETEXTURESIZE(op) \
 	op(ETextureSize::SizeOver8192) \
 	op(ETextureSize::Size4096) \
@@ -70,7 +60,6 @@ template<> COMMONCHECKER_NON_ATTRIBUTED_API UEnum* StaticEnum<EBitActorCategory>
 
 enum class ETextureSize;
 template<> struct TIsUEnumClass<ETextureSize> { enum { Value = true }; };
-template<> COMMONCHECKER_NON_ATTRIBUTED_API UEnum* StaticEnum<ETextureSize>();
-// ********** End Enum ETextureSize ****************************************************************
+template<> COMMONCHECKER_API UEnum* StaticEnum<ETextureSize>();
 
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
