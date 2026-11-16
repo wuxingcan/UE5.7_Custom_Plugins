@@ -16,8 +16,8 @@ DECLARE_DELEGATE(FOnBatchScreenShotFinished);
 
 /**
  * Sequentially opens Level Sequences, locks camera cut to viewport,
- * optionally hides skeletal meshes, then takes 1.5x high-res screenshots
- * at start / middle / end frames (named Sequence_01 / _02 / _03).
+ * optionally hides skeletal meshes, then takes high-res screenshots at the
+ * configured size multiplier at start / middle / end frames.
  */
 class FBatchScreenShotRunner : public TSharedFromThis<FBatchScreenShotRunner>
 {
@@ -27,6 +27,7 @@ public:
 	void Start(
 		const TArray<FAssetData>& InSequences,
 		bool bInHideSkeletalMeshes,
+		float InScreenshotSizeMultiplier,
 		FOnBatchScreenShotProgress InOnProgress,
 		FOnBatchScreenShotFinished InOnFinished);
 
@@ -41,6 +42,7 @@ private:
 		PrepareView,
 		SeekFrame,
 		Capture,
+		WaitForScreenshot,
 		AdvanceShot,
 		AdvanceSequence
 	};
@@ -48,9 +50,11 @@ private:
 	bool Tick(float DeltaTime);
 	void SetStatus(const FString& Message);
 	void Finish();
+	void OnScreenshotProcessed();
 	void RestoreHiddenActors();
 	void HideSkeletalMeshesForActiveSequence();
 	bool OpenCurrentSequence();
+	bool IsCurrentSequenceReady() const;
 	bool BuildShotFramesForCurrentSequence();
 	bool SeekToCurrentShotFrame();
 	void TakeScreenshotForCurrentShot();
@@ -64,6 +68,7 @@ private:
 	int32 CurrentIndex = INDEX_NONE;
 	int32 CaptureShotIndex = 0;
 	bool bHideSkeletalMeshes = false;
+	float ScreenshotSizeMultiplier = 1.f;
 	bool bRunning = false;
 	EStep Step = EStep::Idle;
 	float StepTimer = 0.f;
@@ -71,6 +76,8 @@ private:
 	FOnBatchScreenShotProgress OnProgress;
 	FOnBatchScreenShotFinished OnFinished;
 	FTSTicker::FDelegateHandle TickerHandle;
+	FDelegateHandle ScreenshotProcessedHandle;
+	bool bScreenshotProcessed = false;
 
 	struct FHiddenActorState
 	{

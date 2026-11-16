@@ -14,6 +14,7 @@
 #include "Styling/AppStyle.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SCheckBox.h"
+#include "Widgets/Input/SNumericEntryBox.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Layout/SScrollBox.h"
@@ -156,6 +157,31 @@ void SBatchScreenShotPanel::Construct(const FArguments& InArgs)
 					]
 				]
 				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				.Padding(16.f, 0.f, 4.f, 0.f)
+				[
+					SNew(STextBlock)
+					.Text(LOCTEXT("ScreenshotSizeMultiplier", "截图尺寸乘数"))
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				[
+					SNew(SBox)
+					.WidthOverride(72.f)
+					[
+						SNew(SNumericEntryBox<float>)
+						.IsEnabled_Lambda([this]() { return !bIsRunning; })
+						.Value_Lambda([this]() { return ScreenshotSizeMultiplier; })
+						.MinValue(0.01f)
+						.OnValueChanged_Lambda([this](float NewValue)
+						{
+							ScreenshotSizeMultiplier = NewValue;
+						})
+					]
+				]
+				+ SHorizontalBox::Slot()
 				.FillWidth(1.f)
 				[
 					SNullWidget::NullWidget
@@ -167,6 +193,15 @@ void SBatchScreenShotPanel::Construct(const FArguments& InArgs)
 					.Text(LOCTEXT("Execute", "执行"))
 					.IsEnabled(this, &SBatchScreenShotPanel::CanExecute)
 					.OnClicked(this, &SBatchScreenShotPanel::OnExecuteClicked)
+				]
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(8.f, 0.f, 0.f, 0.f)
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("Stop", "停止"))
+					.IsEnabled_Lambda([this]() { return bIsRunning; })
+					.OnClicked(this, &SBatchScreenShotPanel::OnStopClicked)
 				]
 			]
 			+ SVerticalBox::Slot()
@@ -462,6 +497,7 @@ FReply SBatchScreenShotPanel::OnExecuteClicked()
 	GBatchScreenShotRunner->Start(
 		Selected,
 		bHideSkeletalMeshes,
+		ScreenshotSizeMultiplier,
 		FOnBatchScreenShotProgress::CreateLambda([WeakPanel](const FString& Status, int32 Current, int32 Total)
 		{
 			if(TSharedPtr<SBatchScreenShotPanel> Panel = WeakPanel.Pin())
@@ -484,6 +520,24 @@ FReply SBatchScreenShotPanel::OnExecuteClicked()
 			GBatchScreenShotRunner.Reset();
 		}));
 
+	return FReply::Handled();
+}
+
+FReply SBatchScreenShotPanel::OnStopClicked()
+{
+	if(!bIsRunning)
+	{
+		return FReply::Handled();
+	}
+
+	if(GBatchScreenShotRunner.IsValid())
+	{
+		GBatchScreenShotRunner->Cancel();
+		GBatchScreenShotRunner.Reset();
+	}
+
+	bIsRunning = false;
+	StatusMessage = TEXT("批量截图已停止。");
 	return FReply::Handled();
 }
 

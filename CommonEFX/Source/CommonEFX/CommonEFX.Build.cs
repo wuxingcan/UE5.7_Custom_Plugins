@@ -37,6 +37,8 @@ public class CommonEFX : ModuleRules
 				"Niagara",
 				"NiagaraCore",
 				"NiagaraEditor",
+				"Sockets",
+				"Networking",
 			}
 			);
 	}

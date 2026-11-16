@@ -24,8 +24,6 @@ namespace BatchScreenShotRunnerPrivate
 {
 	static constexpr float OpenSettleTime = 0.75f;
 	static constexpr float SeekSettleTime = 0.5f;
-	static constexpr float CaptureSettleTime = 1.25f;
-	static constexpr float ResolutionMultiplier = 1.5f;
 
 	static bool ActorHasSkeletalMesh(const AActor* Actor)
 	{
@@ -54,28 +52,25 @@ namespace BatchScreenShotRunnerPrivate
 		}
 	}
 
-	static void CollectSkeletalMeshActorsFromSequencer(ULevelSequence* LevelSequence, TSet<AActor*>& OutActors)
+	static TSharedPtr<ISequencer> FindSequencer(ULevelSequence* LevelSequence)
 	{
 		if(!LevelSequence || !GEditor)
 		{
-			return;
+			return nullptr;
 		}
 
 		UAssetEditorSubsystem* AssetEditorSubsystem = GEditor->GetEditorSubsystem<UAssetEditorSubsystem>();
-		if(!AssetEditorSubsystem)
-		{
-			return;
-		}
-
-		IAssetEditorInstance* AssetEditor = AssetEditorSubsystem->FindEditorForAsset(LevelSequence, false);
-		if(!AssetEditor)
-		{
-			return;
-		}
-
+		IAssetEditorInstance* AssetEditor = AssetEditorSubsystem
+			? AssetEditorSubsystem->FindEditorForAsset(LevelSequence, false)
+			: nullptr;
 		ILevelSequenceEditorToolkit* LevelSequenceEditor = static_cast<ILevelSequenceEditorToolkit*>(AssetEditor);
-		TSharedPtr<ISequencer> Sequencer = LevelSequenceEditor ? LevelSequenceEditor->GetSequencer() : nullptr;
-		UMovieScene* MovieScene = LevelSequence->GetMovieScene();
+		return LevelSequenceEditor ? LevelSequenceEditor->GetSequencer() : nullptr;
+	}
+
+	static void CollectSkeletalMeshActorsFromSequencer(ULevelSequence* LevelSequence, TSet<AActor*>& OutActors)
+	{
+		TSharedPtr<ISequencer> Sequencer = FindSequencer(LevelSequence);
+		UMovieScene* MovieScene = LevelSequence ? LevelSequence->GetMovieScene() : nullptr;
 		if(!Sequencer.IsValid() || !MovieScene)
 		{
 			return;
@@ -118,6 +113,7 @@ namespace BatchScreenShotRunnerPrivate
 void FBatchScreenShotRunner::Start(
 	const TArray<FAssetData>& InSequences,
 	bool bInHideSkeletalMeshes,
+	float InScreenshotSizeMultiplier,
 	FOnBatchScreenShotProgress InOnProgress,
 	FOnBatchScreenShotFinished InOnFinished)
 {
@@ -125,6 +121,7 @@ void FBatchScreenShotRunner::Start(
 
 	Sequences = InSequences;
 	bHideSkeletalMeshes = bInHideSkeletalMeshes;
+	ScreenshotSizeMultiplier = FMath::Max(0.01f, InScreenshotSizeMultiplier);
 	OnProgress = MoveTemp(InOnProgress);
 	OnFinished = MoveTemp(InOnFinished);
 	CurrentIndex = 0;
@@ -154,8 +151,15 @@ void FBatchScreenShotRunner::Cancel()
 		FTSTicker::GetCoreTicker().RemoveTicker(TickerHandle);
 		TickerHandle.Reset();
 	}
+	if(ScreenshotProcessedHandle.IsValid())
+	{
+		FScreenshotRequest::OnScreenshotRequestProcessed().Remove(ScreenshotProcessedHandle);
+		ScreenshotProcessedHandle.Reset();
+	}
+	bScreenshotProcessed = false;
 
 	RestoreHiddenActors();
+	ULevelSequenceEditorBlueprintLibrary::SetLockCameraCutToViewport(false);
 	bRunning = false;
 	Step = EStep::Idle;
 	CurrentIndex = INDEX_NONE;
@@ -201,6 +205,13 @@ bool FBatchScreenShotRunner::Tick(float DeltaTime)
 	case EStep::PrepareView:
 		if(StepTimer >= BatchScreenShotRunnerPrivate::OpenSettleTime)
 		{
+			if(!IsCurrentSequenceReady())
+			{
+				OpenCurrentSequence();
+				StepTimer = 0.f;
+				break;
+			}
+
 			ULevelSequenceEditorBlueprintLibrary::Pause();
 			ULevelSequenceEditorBlueprintLibrary::SetLockCameraCutToViewport(true);
 
@@ -224,6 +235,13 @@ bool FBatchScreenShotRunner::Tick(float DeltaTime)
 
 	case EStep::SeekFrame:
 		{
+			if(!IsCurrentSequenceReady())
+			{
+				Step = EStep::PrepareView;
+				StepTimer = 0.f;
+				break;
+			}
+
 			if(!SeekToCurrentShotFrame())
 			{
 				SetStatus(FString::Printf(
@@ -249,12 +267,37 @@ bool FBatchScreenShotRunner::Tick(float DeltaTime)
 		break;
 
 	case EStep::Capture:
+		if(!IsCurrentSequenceReady())
+		{
+			SetStatus(FString::Printf(TEXT("(%d/%d) Sequence 编辑器状态已变化，重新准备：%s"),
+				CurrentIndex + 1,
+				Sequences.Num(),
+				*GetCurrentSequenceName()));
+			Step = EStep::PrepareView;
+			StepTimer = 0.f;
+			break;
+		}
+
 		if(StepTimer >= BatchScreenShotRunnerPrivate::SeekSettleTime)
 		{
-			// Sequencer seek 会重新评估 Spawnable，必须在截图前再次禁用显示。
+			if(FScreenshotRequest::IsScreenshotRequested() || GIsHighResScreenshot)
+			{
+				SetStatus(TEXT("等待上一张截图处理完成..."));
+				break;
+			}
+
+			ULevelSequenceEditorBlueprintLibrary::Pause();
+			ULevelSequenceEditorBlueprintLibrary::SetLockCameraCutToViewport(true);
+			ULevelSequenceEditorBlueprintLibrary::ForceUpdate();
+
+			// 最终求值会重新生成或显示 Spawnable，必须在求值后隐藏再请求截图。
 			if(bHideSkeletalMeshes)
 			{
 				HideSkeletalMeshesForActiveSequence();
+			}
+			if(GEditor)
+			{
+				GEditor->RedrawLevelEditingViewports(true);
 			}
 
 			TakeScreenshotForCurrentShot();
@@ -265,26 +308,35 @@ bool FBatchScreenShotRunner::Tick(float DeltaTime)
 				*GetShotLabel(),
 				*GetCurrentSequenceName(),
 				CaptureShotIndex + 1));
+			Step = EStep::WaitForScreenshot;
+			StepTimer = 0.f;
+		}
+		break;
+
+	case EStep::WaitForScreenshot:
+		if(bScreenshotProcessed)
+		{
+			if(ScreenshotProcessedHandle.IsValid())
+			{
+				FScreenshotRequest::OnScreenshotRequestProcessed().Remove(ScreenshotProcessedHandle);
+				ScreenshotProcessedHandle.Reset();
+			}
 			Step = EStep::AdvanceShot;
 			StepTimer = 0.f;
 		}
 		break;
 
 	case EStep::AdvanceShot:
-		if(StepTimer >= BatchScreenShotRunnerPrivate::CaptureSettleTime)
+		++CaptureShotIndex;
+		if(CaptureShotIndex >= ShotsPerSequence)
 		{
-			++CaptureShotIndex;
-			if(CaptureShotIndex >= ShotsPerSequence)
-			{
-				Step = EStep::AdvanceSequence;
-				StepTimer = 0.f;
-			}
-			else
-			{
-				Step = EStep::SeekFrame;
-				StepTimer = 0.f;
-			}
+			Step = EStep::AdvanceSequence;
 		}
+		else
+		{
+			Step = EStep::SeekFrame;
+		}
+		StepTimer = 0.f;
 		break;
 
 	case EStep::AdvanceSequence:
@@ -351,6 +403,11 @@ void FBatchScreenShotRunner::Finish()
 		FTSTicker::GetCoreTicker().RemoveTicker(TickerHandle);
 		TickerHandle.Reset();
 	}
+	if(ScreenshotProcessedHandle.IsValid())
+	{
+		FScreenshotRequest::OnScreenshotRequestProcessed().Remove(ScreenshotProcessedHandle);
+		ScreenshotProcessedHandle.Reset();
+	}
 
 	RestoreHiddenActors();
 	ULevelSequenceEditorBlueprintLibrary::SetLockCameraCutToViewport(false);
@@ -361,6 +418,11 @@ void FBatchScreenShotRunner::Finish()
 	{
 		OnFinished.Execute();
 	}
+}
+
+void FBatchScreenShotRunner::OnScreenshotProcessed()
+{
+	bScreenshotProcessed = true;
 }
 
 FString FBatchScreenShotRunner::GetCurrentSequenceName() const
@@ -397,6 +459,19 @@ bool FBatchScreenShotRunner::OpenCurrentSequence()
 	}
 
 	return ULevelSequenceEditorBlueprintLibrary::OpenLevelSequence(LevelSequence);
+}
+
+bool FBatchScreenShotRunner::IsCurrentSequenceReady() const
+{
+	if(!Sequences.IsValidIndex(CurrentIndex))
+	{
+		return false;
+	}
+
+	ULevelSequence* LevelSequence = Cast<ULevelSequence>(Sequences[CurrentIndex].GetAsset());
+	return LevelSequence
+		&& ULevelSequenceEditorBlueprintLibrary::GetCurrentLevelSequence() == LevelSequence
+		&& BatchScreenShotRunnerPrivate::FindSequencer(LevelSequence).IsValid();
 }
 
 bool FBatchScreenShotRunner::BuildShotFramesForCurrentSequence()
@@ -445,6 +520,12 @@ bool FBatchScreenShotRunner::SeekToCurrentShotFrame()
 	const FFrameNumber Frame = ShotFrames[CaptureShotIndex];
 	FMovieSceneSequencePlaybackParams PlaybackParams(FFrameTime(Frame), EUpdatePositionMethod::Play);
 	ULevelSequenceEditorBlueprintLibrary::SetGlobalPosition(PlaybackParams, EMovieSceneTimeUnit::TickResolution);
+	ULevelSequenceEditorBlueprintLibrary::SetLockCameraCutToViewport(true);
+	ULevelSequenceEditorBlueprintLibrary::ForceUpdate();
+	if(GEditor)
+	{
+		GEditor->RedrawLevelEditingViewports(true);
+	}
 	return true;
 }
 
@@ -461,12 +542,9 @@ void FBatchScreenShotRunner::HideSkeletalMeshesForActiveSequence()
 
 	BatchScreenShotRunnerPrivate::CollectSkeletalMeshActorsFromSequencer(LevelSequence, ActorsToHide);
 
-	// 若绑定解析不到（或尚未生成 Spawnable），回退为隐藏场景中全部骨骼网格体 Actor。
-	if(ActorsToHide.Num() == 0)
-	{
-		UWorld* World = GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
-		BatchScreenShotRunnerPrivate::CollectSkeletalMeshActorsFromWorld(World, ActorsToHide);
-	}
+	// 绑定可能只解析成功一部分，始终补充世界中的骨骼网格体 Actor 以覆盖 Spawnable。
+	UWorld* World = GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+	BatchScreenShotRunnerPrivate::CollectSkeletalMeshActorsFromWorld(World, ActorsToHide);
 
 	for(AActor* Actor : ActorsToHide)
 	{
@@ -535,10 +613,13 @@ void FBatchScreenShotRunner::TakeScreenshotForCurrentShot()
 
 	FHighResScreenshotConfig& Config = GetHighResScreenshotConfig();
 	Config.SetFilename(Filename);
-	Config.ResolutionMultiplier = BatchScreenShotRunnerPrivate::ResolutionMultiplier;
+	Config.ResolutionMultiplier = ScreenshotSizeMultiplier;
 	Config.bDateTimeBasedNaming = false;
 	Config.bMaskEnabled = false;
 
+	bScreenshotProcessed = false;
+	ScreenshotProcessedHandle = FScreenshotRequest::OnScreenshotRequestProcessed().AddSP(
+		this, &FBatchScreenShotRunner::OnScreenshotProcessed);
 	GIsHighResScreenshot = true;
 	FScreenshotRequest::RequestScreenshot(false);
 }

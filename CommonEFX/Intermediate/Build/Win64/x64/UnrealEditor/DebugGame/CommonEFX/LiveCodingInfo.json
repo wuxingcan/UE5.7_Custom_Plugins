@@ -4,7 +4,8 @@
 		"Module.CommonEFX.cpp.obj": [
 			"PerModuleInline.gen.cpp.obj",
 			"CommonEFX.cpp.obj",
-			"CommonEFXExporter.cpp.obj"
+			"CommonEFXExporter.cpp.obj",
+			"CommonEFXSnapshotV2.cpp.obj"
 		]
 	}
 }

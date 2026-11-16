@@ -37,6 +37,7 @@ private:
 	FReply OnSelectAllClicked();
 	FReply OnDeselectAllClicked();
 	FReply OnExecuteClicked();
+	FReply OnStopClicked();
 	FReply OnOpenSequenceClicked(int32 Index);
 
 	FText GetFolderPathText() const;
@@ -49,6 +50,7 @@ private:
 	TArray<FString> FolderPaths;
 	TArray<FBatchScreenShotSequenceItem> SequenceItems;
 	bool bHideSkeletalMeshes = true;
+	float ScreenshotSizeMultiplier = 1.f;
 	bool bIsRunning = false;
 	FString StatusMessage;
 	int32 ProgressCurrent = 0;
